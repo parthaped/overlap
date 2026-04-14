@@ -9,6 +9,7 @@ import { Cable, FileText, LayoutDashboard, LogOut, Mail, Settings } from "lucide
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+import { AppBackdrop } from "@/components/app/app-backdrop";
 import { Button } from "@/components/ui/button";
 
 export type AppShellUser = {
@@ -49,7 +50,7 @@ export function AppShell({ user, children }: AppShellProps) {
       >
         <div className="mx-auto grid h-16 max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3 justify-self-start">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted/80 ring-1 ring-border/60">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-muted/90 to-muted/60 ring-1 ring-border/50 shadow-sm">
               <Mail className="h-5 w-5 text-foreground" strokeWidth={1.5} aria-hidden />
             </div>
             <div className="min-w-0">
@@ -107,8 +108,9 @@ export function AppShell({ user, children }: AppShellProps) {
         </div>
       </motion.header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-10 pb-24 md:pb-10 lg:px-8">
-        {children}
+      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-10 pb-24 md:pb-10 lg:px-8">
+        <AppBackdrop />
+        <div className="relative z-0">{children}</div>
       </div>
 
       <nav
@@ -164,21 +166,31 @@ export function AppShell({ user, children }: AppShellProps) {
 export function AppSection({
   title,
   description,
+  eyebrow = "Workspace",
   children,
   className,
 }: {
   title: string;
   description?: string;
+  eyebrow?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn("space-y-6", className)}>
-      <div>
-        <h1 className="font-serif text-3xl tracking-tight text-foreground">{title}</h1>
-        {description ? <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p> : null}
-      </div>
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      className={cn("space-y-8", className)}
+    >
+      <header className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{eyebrow}</p>
+        <h1 className="font-serif text-3xl tracking-tight text-foreground sm:text-[2.15rem]">{title}</h1>
+        {description ? (
+          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">{description}</p>
+        ) : null}
+      </header>
       {children}
-    </section>
+    </motion.section>
   );
 }

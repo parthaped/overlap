@@ -22,15 +22,17 @@ export default async function SettingsPage() {
 
   return (
     <AppSection
+      eyebrow="Preferences"
       title="Settings"
       description="Adjust workspace behavior, tone defaults, and account-level preferences."
     >
       <SettingsForm preferredTone={user.preferredTone} inboxStyle={user.inboxStyle} />
-      <div className="rounded-[1.5rem] border border-border/60 bg-card/70 p-6 text-sm text-muted-foreground shadow-card">
-        <p className="font-medium text-foreground">Security</p>
-        <p className="mt-2">Signed in as {user.email}</p>
-        <p className="mt-1">Account created on {user.createdAt.toLocaleDateString()}</p>
-        <p className="mt-3">
+      <div className="relative overflow-hidden rounded-[1.85rem] border border-border/50 bg-card/88 p-6 text-sm text-muted-foreground shadow-soft ring-1 ring-border/30 backdrop-blur-[2px] sm:p-8">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border/80 to-transparent" />
+        <p className="font-serif text-lg tracking-tight text-foreground">Security</p>
+        <p className="mt-3 leading-relaxed">Signed in as {user.email}</p>
+        <p className="mt-2 leading-relaxed">Account created on {user.createdAt.toLocaleDateString()}</p>
+        <p className="mt-4 leading-relaxed text-muted-foreground/95">
           Sessions persist on this browser/device. Signing out revokes local access.
         </p>
       </div>
