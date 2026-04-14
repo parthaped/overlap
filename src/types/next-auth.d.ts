@@ -9,8 +9,6 @@ declare module "next-auth" {
       preferredTone: string;
       inboxStyle: InboxStyle;
       onboardedAt: string | null;
-      rememberSessionPreference: boolean;
-      sessionExpiresAt: string | null;
     };
   }
 }
@@ -20,8 +18,6 @@ declare module "next-auth/jwt" {
     preferredTone?: string;
     inboxStyle?: InboxStyle;
     primaryAccountId?: string | null;
-    rememberSessionPreference?: boolean;
     onboardedAt?: string | null;
-    sessionExpiresAt?: string | null;
   }
 }

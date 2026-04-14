@@ -43,14 +43,12 @@ export function SignInForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
-    const rememberMe = formData.get("rememberMe") === "on" ? "true" : "false";
 
     setError(null);
     startTransition(async () => {
       const result = await signIn("credentials", {
         email,
         password,
-        rememberMe,
         redirect: false,
       });
 
@@ -103,16 +101,6 @@ export function SignInForm({
           placeholder="••••••••"
         />
       </div>
-
-      <label className="flex cursor-pointer items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-foreground">
-        <input
-          className="h-4 w-4 rounded border-border text-foreground transition duration-500"
-          type="checkbox"
-          name="rememberMe"
-          defaultChecked
-        />
-        Remember this device
-      </label>
 
       {error ? (
         <p className="text-sm text-destructive" role="alert">

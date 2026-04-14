@@ -22,14 +22,12 @@ export async function signUp(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
-    rememberMe: formData.get("rememberMe") === "on",
   };
 
   const parsed = signUpSchema.safeParse({
     name: raw.name,
     email: raw.email,
     password: raw.password,
-    rememberMe: raw.rememberMe,
   });
 
   if (!parsed.success) {

@@ -8,7 +8,6 @@ describe("signUpSchema", () => {
       name: "Alex Mercer",
       email: "alex@example.com",
       password: "password123",
-      rememberMe: true,
     });
     expect(result.success).toBe(true);
   });
@@ -18,7 +17,6 @@ describe("signUpSchema", () => {
       name: "Alex Mercer",
       email: "alex@example.com",
       password: "short",
-      rememberMe: true,
     });
     expect(result.success).toBe(false);
   });
@@ -28,7 +26,6 @@ describe("signUpSchema", () => {
       name: "Alex Mercer",
       email: "not-an-email",
       password: "password123",
-      rememberMe: true,
     });
     expect(result.success).toBe(false);
   });

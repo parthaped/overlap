@@ -10,7 +10,6 @@ import { comparePassword } from "@/lib/password";
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  rememberMe: z.union([z.literal("true"), z.literal("false")]).optional().default("true"),
 });
 
 type AuthUserPayload = {
@@ -20,7 +19,6 @@ type AuthUserPayload = {
   preferredTone: string;
   inboxStyle: InboxStyle;
   primaryAccountId: string | null;
-  rememberSessionPreference: boolean;
   onboardedAt: string | null;
 };
 
@@ -28,7 +26,9 @@ export const authOptions: NextAuthOptions = {
   secret: env.AUTH_SECRET,
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60 * 24 * 30,
+    // Persistent login on the same browser/device.
+    maxAge: 60 * 60 * 24 * 45,
+    updateAge: 60 * 60 * 24,
   },
   pages: {
     signIn: "/signin",
@@ -39,7 +39,6 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        rememberMe: { label: "Remember me", type: "text" },
       },
       async authorize(rawCredentials) {
         const parsed = credentialsSchema.safeParse(rawCredentials);
@@ -48,7 +47,6 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const remember = parsed.data.rememberMe === "true";
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email.toLowerCase() },
         });
@@ -73,7 +71,6 @@ export const authOptions: NextAuthOptions = {
           preferredTone: user.preferredTone,
           inboxStyle: user.inboxStyle,
           primaryAccountId: user.primaryAccountId,
-          rememberSessionPreference: remember,
           onboardedAt: user.onboardedAt ? user.onboardedAt.toISOString() : null,
         };
 
@@ -105,14 +102,7 @@ export const authOptions: NextAuthOptions = {
         token.preferredTone = authUser.preferredTone;
         token.inboxStyle = authUser.inboxStyle;
         token.primaryAccountId = authUser.primaryAccountId;
-        token.rememberSessionPreference = authUser.rememberSessionPreference;
         token.onboardedAt = authUser.onboardedAt;
-        token.sessionExpiresAt = new Date(
-          Date.now() +
-            (authUser.rememberSessionPreference
-              ? 1000 * 60 * 60 * 24 * 30
-              : 1000 * 60 * 60 * 12),
-        ).toISOString();
       }
 
       if (trigger === "update" && session?.user) {
@@ -133,10 +123,6 @@ export const authOptions: NextAuthOptions = {
         session.user.inboxStyle =
           (token.inboxStyle as InboxStyle | null) ?? "BALANCED";
         session.user.onboardedAt = (token.onboardedAt as string | null) ?? null;
-        session.user.rememberSessionPreference =
-          (token.rememberSessionPreference as boolean | null) ?? true;
-        session.user.sessionExpiresAt =
-          (token.sessionExpiresAt as string | null) ?? session.expires;
       }
 
       return session;
@@ -148,13 +134,6 @@ export async function getCurrentSession() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return null;
-  }
-
-  if (
-    session.user.sessionExpiresAt &&
-    new Date(session.user.sessionExpiresAt) < new Date()
-  ) {
     return null;
   }
 

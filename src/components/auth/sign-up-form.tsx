@@ -66,11 +66,6 @@ export function SignUpForm() {
         ) : null}
       </div>
 
-      <label className="flex cursor-pointer items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-foreground">
-        <input className="h-4 w-4 rounded border-border" type="checkbox" name="rememberMe" defaultChecked />
-        Remember this device after sign-in
-      </label>
-
       {state.error ? (
         <p className="text-sm text-destructive" role="alert">
           {state.error}
