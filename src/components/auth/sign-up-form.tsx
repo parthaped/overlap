@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 
 import { signUp, type SignUpState } from "@/actions/auth";
 
@@ -11,7 +12,14 @@ import { Label } from "@/components/ui/label";
 const initialState: SignUpState = {};
 
 export function SignUpForm() {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(signUp, initialState);
+
+  useEffect(() => {
+    if (state.success && state.email) {
+      router.push(`/signin?registered=1&email=${encodeURIComponent(state.email)}`);
+    }
+  }, [state.success, state.email, router]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -65,8 +73,8 @@ export function SignUpForm() {
         </p>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Creating account…" : "Create account"}
+      <Button type="submit" className="w-full" disabled={isPending || state.success}>
+        {isPending ? "Creating account…" : state.success ? "Redirecting…" : "Create account"}
       </Button>
     </form>
   );
