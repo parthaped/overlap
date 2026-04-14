@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
-import { LogOut, Mail } from "lucide-react";
+import { LayoutDashboard, LogOut, Mail } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,14 @@ export function AppShell({ user, children }: AppShellProps) {
               <p className="font-medium leading-tight text-foreground">{user.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/inbox"
+              className="inline-flex items-center gap-2 rounded-full bg-muted/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Dashboard
+            </Link>
             <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
             <Button
               variant="secondary"
