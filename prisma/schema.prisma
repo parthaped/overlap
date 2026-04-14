@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProviderType {
+  GOOGLE
+  MICROSOFT
+  ICLOUD
+  IMAP
+  SMTP
+  DEMO
+}
+
+enum SyncStatus {
+  ACTIVE
+  ERROR
+  PENDING
+  PAUSED
+}
+
+enum FocusBucket {
+  FOCUS
+  OTHER
+  NEEDS_REPLY
+  WAITING_ON
+  SCHEDULED
+  SENT
+  DRAFTS
+  TRASH
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum InboxStyle {
+  MINIMALIST
+  BALANCED
+  DETAILED
+}
+
+model User {
+  id                        String               @id @default(cuid())
+  name                      String
+  email                     String               @unique
+  passwordHash              String
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+  primaryAccountId          String?
+  preferredTone             String               @default("Professional but warm")
+  inboxStyle                InboxStyle           @default(BALANCED)
+  rememberSessionPreference Boolean              @default(true)
+  prioritizeJson            Json?
+  deprioritizeJson          Json?
+  aiPreferencesJson         Json?
+  onboardedAt               DateTime?
+  primaryAccount            LinkedEmailAccount?  @relation("PrimaryIdentity", fields: [primaryAccountId], references: [id], onDelete: SetNull)
+  linkedAccounts            LinkedEmailAccount[] @relation("UserLinkedAccounts")
+  threads                   MessageThread[]
+  uploadedContextFiles      UploadedContextFile[]
+  draftSuggestions          DraftSuggestion[]
+  calendarConnections       CalendarConnection[]
+  auditLogs                 AuditLog[]
+
+  @@index([onboardedAt])
+}
+
+model LinkedEmailAccount {
+  id                    String          @id @default(cuid())
+  userId                String
+  providerType          ProviderType
+  providerAccountEmail  String
+  displayName           String
+  isPrimary             Boolean         @default(false)
+  accessToken           String?
+  refreshToken          String?
+  tokenExpiresAt        DateTime?
+  imapHost              String?
+  imapPort              Int?
+  smtpHost              String?
+  smtpPort              Int?
+  encryptedCredentials  Json?
+  syncStatus            SyncStatus      @default(PENDING)
+  lastSyncedAt          DateTime?
+  colorTag              String          @default("#5bbabd")
+  avatarUrl             String?
+  deletedAt             DateTime?
+  user                  User            @relation("UserLinkedAccounts", fields: [userId], references: [id], onDelete: Cascade)
+  primaryForUsers       User[]          @relation("PrimaryIdentity")
+  messages              EmailMessage[]
+
+  @@unique([providerType, providerAccountEmail])
+  @@index([userId, providerType])
+  @@index([userId, isPrimary])
+}
+
+model MessageThread {
+  id                String             @id @default(cuid())
+  userId            String
+  normalizedSubject String
+  lastMessageAt     DateTime
+  needsReply        Boolean            @default(false)
+  waitingOnOther    Boolean            @default(false)
+  aiSummary         String?
+  aiPriorityScore   Float              @default(0)
+  focusBucket       FocusBucket        @default(OTHER)
+  aiReasoningJson   Json?
+  deletedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages          EmailMessage[]
+  uploadedFiles     UploadedContextFile[]
+  draftSuggestions  DraftSuggestion[]
+
+  @@index([userId, focusBucket, lastMessageAt(sort: Desc)])
+  @@index([userId, needsReply, waitingOnOther])
+}
+
+model EmailMessage {
+  id                  String           @id @default(cuid())
+  threadId            String
+  linkedAccountId     String
+  providerMessageId   String
+  providerThreadId    String
+  fromJson            Json
+  toJson              Json
+  ccJson              Json?
+  bccJson             Json?
+  subject             String
+  snippet             String?
+  bodyText            String?
+  bodyHtml            String?
+  direction           MessageDirection
+  receivedAt          DateTime?
+  sentAt              DateTime?
+  isRead              Boolean          @default(false)
+  isStarred           Boolean          @default(false)
+  isDraft             Boolean          @default(false)
+  isTrashed           Boolean          @default(false)
+  rawFolderLabelsJson Json?
+  aiPriorityScore     Float            @default(0)
+  aiClassificationJson Json?
+  needsReply          Boolean          @default(false)
+  actionDeadlineAt    DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  thread              MessageThread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  linkedAccount       LinkedEmailAccount @relation(fields: [linkedAccountId], references: [id], onDelete: Cascade)
+  attachments         Attachment[]
+  sourceDraftSuggestions DraftSuggestion[] @relation("DraftSourceMessage")
+
+  @@unique([linkedAccountId, providerMessageId])
+  @@index([threadId, receivedAt(sort: Desc)])
+  @@index([linkedAccountId, sentAt(sort: Desc)])
+}
+
+model Attachment {
+  id          String       @id @default(cuid())
+  messageId   String
+  fileName    String
+  mimeType    String
+  size        Int
+  storagePath String
+  message     EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+model UploadedContextFile {
+  id            String         @id @default(cuid())
+  userId        String
+  threadId      String?
+  originalName  String
+  mimeType      String
+  extractedText String
+  storagePath   String
+  createdAt     DateTime       @default(now())
+  deletedAt     DateTime?
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread        MessageThread? @relation(fields: [threadId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([threadId])
+}
+
+model DraftSuggestion {
+  id                 String         @id @default(cuid())
+  userId             String
+  threadId           String
+  sourceMessageId    String?
+  generatedSubject   String
+  generatedBody      String
+  tone               String
+  contextSourcesJson Json?
+  approvedAt         DateTime?
+  sentAt             DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread             MessageThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sourceMessage      EmailMessage?  @relation("DraftSourceMessage", fields: [sourceMessageId], references: [id], onDelete: SetNull)
+
+  @@index([threadId, createdAt(sort: Desc)])
+}
+
+model CalendarConnection {
+  id             String       @id @default(cuid())
+  userId         String
+  providerType   ProviderType
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  syncStatus     SyncStatus   @default(PENDING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, providerType])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String
+  action       String
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
