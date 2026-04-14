@@ -5,8 +5,6 @@ import { signIn } from "next-auth/react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { DEMO_CREDENTIALS } from "@/lib/constants";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,28 +109,6 @@ export function SignInForm({
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? "Signing in…" : "Continue"}
       </Button>
-
-      <DemoFillButton />
     </form>
-  );
-}
-
-function DemoFillButton() {
-  return (
-    <button
-      type="button"
-      className="w-full rounded-2xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm text-muted-foreground transition-all duration-500 hover:border-border hover:bg-muted/50 hover:text-foreground"
-      onClick={() => {
-        const email = document.getElementById("email") as HTMLInputElement | null;
-        const password = document.getElementById("password") as HTMLInputElement | null;
-        if (email) email.value = DEMO_CREDENTIALS.email;
-        if (password) password.value = DEMO_CREDENTIALS.password;
-        toast.message("Demo credentials filled", {
-          description: "Press Continue to explore the seeded inbox.",
-        });
-      }}
-    >
-      Use demo account
-    </button>
   );
 }
