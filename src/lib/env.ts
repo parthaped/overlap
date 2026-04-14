@@ -6,6 +6,9 @@ import { z } from "zod";
  * so Preview and first-time Production deploys work without manual copy-paste.
  * Override in the Vercel dashboard when using a custom domain.
  */
+const DEV_AUTH = "development-auth-secret-change-me-please";
+const DEV_ENC = "development-encryption-key-change-me";
+
 if (process.env.VERCEL === "1" && process.env.VERCEL_URL) {
   const origin = `https://${process.env.VERCEL_URL}`;
   if (!process.env.NEXTAUTH_URL?.trim()) {
@@ -13,6 +16,20 @@ if (process.env.VERCEL === "1" && process.env.VERCEL_URL) {
   }
   if (!process.env.APP_URL?.trim()) {
     process.env.APP_URL = origin;
+  }
+}
+
+/**
+ * If only `AUTH_SECRET` is set in Vercel (common), Zod would still default `APP_ENCRYPTION_KEY`
+ * to the dev placeholder and fail the production check. Reuse the same secret material when
+ * `APP_ENCRYPTION_KEY` is omitted and `AUTH_SECRET` is already a non-default value.
+ * (AES key is derived via SHA-256 in `lib/crypto.ts`.)
+ */
+if (process.env.VERCEL === "1") {
+  const auth = process.env.AUTH_SECRET?.trim();
+  const enc = process.env.APP_ENCRYPTION_KEY?.trim();
+  if (!enc && auth && auth !== DEV_AUTH && auth.length >= 32) {
+    process.env.APP_ENCRYPTION_KEY = auth;
   }
 }
 
@@ -62,13 +79,15 @@ const data = parsed.data;
 
 /** On Vercel builds/runtime, reject default dev-only secrets and require HTTPS app URL. */
 if (process.env.VERCEL === "1") {
-  const devAuth = "development-auth-secret-change-me-please";
-  const devEnc = "development-encryption-key-change-me";
-  if (data.AUTH_SECRET === devAuth) {
-    throw new Error("AUTH_SECRET must be set to a strong random value in production (Vercel).");
+  if (data.AUTH_SECRET === DEV_AUTH) {
+    throw new Error(
+      "AUTH_SECRET must be set to a strong random value in production (Vercel project → Environment Variables).",
+    );
   }
-  if (data.APP_ENCRYPTION_KEY === devEnc) {
-    throw new Error("APP_ENCRYPTION_KEY must be set to a strong random value in production (Vercel).");
+  if (data.APP_ENCRYPTION_KEY === DEV_ENC) {
+    throw new Error(
+      "APP_ENCRYPTION_KEY must be set to a strong random value in production (Vercel), or set AUTH_SECRET and omit APP_ENCRYPTION_KEY so it can reuse that value.",
+    );
   }
   if (!data.NEXTAUTH_URL.startsWith("https://")) {
     throw new Error("NEXTAUTH_URL must use https in production (Vercel).");
