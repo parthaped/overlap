@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, LogOut, Mail } from "lucide-react";
+import { Cable, FileText, LayoutDashboard, LogOut, Mail, Settings } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,14 @@ type AppShellProps = {
 };
 
 export function AppShell({ user, children }: AppShellProps) {
+  const pathname = usePathname();
+  const nav = [
+    { href: "/inbox", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/inbox/accounts", label: "Accounts", icon: Cable },
+    { href: "/inbox/drafts", label: "Drafts", icon: FileText },
+    { href: "/inbox/settings", label: "Settings", icon: Settings },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col">
       <motion.header
@@ -40,13 +49,27 @@ export function AppShell({ user, children }: AppShellProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              href="/inbox"
-              className="inline-flex items-center gap-2 rounded-full bg-muted/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              Dashboard
-            </Link>
+            <div className="hidden items-center gap-1 rounded-full bg-muted/50 p-1 md:flex">
+              {nav.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+                      active
+                        ? "bg-background text-foreground shadow-card"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
             <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
             <Button
               variant="secondary"
