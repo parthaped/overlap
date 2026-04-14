@@ -80,7 +80,11 @@ export function SignInForm({
           id="email"
           name="email"
           type="email"
+          inputMode="email"
           autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           required
           defaultValue={defaultEmail ?? ""}
           placeholder="you@company.com"

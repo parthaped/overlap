@@ -23,6 +23,8 @@ if (isProd) {
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
+  /** Neon serverless driver + ws (used by `src/lib/db.ts` on Vercel). */
+  serverExternalPackages: ["@neondatabase/serverless", "@prisma/adapter-neon", "ws"],
   allowedDevOrigins: ["127.0.0.1"],
   async headers() {
     return [

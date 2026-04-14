@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/landing/site-header";
 import { Hero } from "@/components/landing/hero";
+import { ProductDemo } from "@/components/landing/product-demo";
 import { FeatureGrid } from "@/components/landing/feature-grid";
 import { SiteFooter } from "@/components/landing/site-footer";
 
@@ -9,6 +10,7 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-1">
         <Hero />
+        <ProductDemo />
         <FeatureGrid />
       </main>
       <SiteFooter />

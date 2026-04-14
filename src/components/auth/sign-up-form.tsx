@@ -37,7 +37,11 @@ export function SignUpForm() {
           id="email"
           name="email"
           type="email"
+          inputMode="email"
           autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           required
           placeholder="you@company.com"
         />
