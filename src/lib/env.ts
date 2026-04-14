@@ -46,10 +46,14 @@ const envSchema = z.object({
     .default("development-encryption-key-change-me"),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-4.1-mini"),
+  /** Google Cloud OAuth web client (Gmail). See `.env.example`; connect flow not implemented yet. */
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  /** Microsoft Entra app registration (Outlook). See `.env.example`; connect flow not implemented yet. */
   MICROSOFT_CLIENT_ID: z.string().optional(),
   MICROSOFT_CLIENT_SECRET: z.string().optional(),
+  /** e.g. `common` or tenant GUID — reserved for Azure AD provider when wired. */
+  MICROSOFT_TENANT_ID: z.string().optional(),
   SMTP_FROM_NAME: z.string().default("Overlap"),
 });
 
@@ -67,6 +71,7 @@ const parsed = envSchema.safeParse({
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
   MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
+  MICROSOFT_TENANT_ID: process.env.MICROSOFT_TENANT_ID,
   SMTP_FROM_NAME: process.env.SMTP_FROM_NAME,
 });
 

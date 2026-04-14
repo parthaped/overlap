@@ -1,7 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  ArrowDownUp,
   ChevronRight,
   Inbox,
   Loader2,
@@ -78,12 +79,14 @@ const draftPhrases = [
 ];
 
 export function ProductDemo() {
+  const reduceMotion = useReducedMotion();
   const [provider, setProvider] = useState<ProviderId>("google");
   const [bucket, setBucket] = useState<"all" | "needs">("needs");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [phase, setPhase] = useState<"idle" | "generating" | "ready" | "sent">("idle");
   const [typed, setTyped] = useState("");
   const [sendPulse, setSendPulse] = useState(false);
+  const [sortPulse, setSortPulse] = useState(false);
 
   const threads = demoThreads[provider];
   const filtered = useMemo(
@@ -125,26 +128,51 @@ export function ProductDemo() {
 
   const ease = [0.22, 1, 0.36, 1] as const;
 
+  const triggerSortFeedback = () => {
+    setSortPulse(true);
+    window.setTimeout(() => setSortPulse(false), 500);
+  };
+
   return (
-    <section className="border-t border-border/50 bg-gradient-to-b from-card/40 to-background px-6 py-24 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+    <section className="relative overflow-hidden border-t border-border/40 bg-gradient-to-b from-card/50 via-background to-background px-6 py-24 lg:px-8">
+      <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[min(100%,48rem)] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center_top,rgba(91,187,189,0.09),transparent_65%)]" />
+
+      <div className="relative mx-auto max-w-6xl">
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.6, ease }}
+          className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground"
+        >
           Live preview
-        </p>
-        <h2 className="mt-4 text-center font-serif text-3xl tracking-tight text-foreground sm:text-4xl">
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.65, delay: 0.05, ease }}
+          className="mt-4 text-center font-serif text-3xl tracking-tight text-foreground sm:text-4xl"
+        >
           One surface. Every provider. Same calm rhythm.
-        </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted-foreground">
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.65, delay: 0.1, ease }}
+          className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted-foreground"
+        >
           Switch accounts, triage by bucket, and watch a reply draft appear—without leaving this
           layout.
-        </p>
+        </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.75, ease }}
-          className="mt-14 overflow-hidden rounded-[1.75rem] border border-border/60 bg-card/90 shadow-soft ring-1 ring-border/40"
+          transition={{ duration: 0.75, delay: 0.06, ease }}
+          className="mt-14 overflow-hidden rounded-[1.85rem] border border-border/50 bg-card/92 shadow-soft ring-1 ring-border/35 backdrop-blur-[2px]"
         >
           {/* App chrome */}
           <div className="flex flex-col gap-0 border-b border-border/50 bg-muted/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -187,12 +215,27 @@ export function ProductDemo() {
             {/* Thread list */}
             <div className="border-b border-border/50 p-4 lg:border-b-0 lg:border-r">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Sort</span>
+                <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <motion.span
+                    animate={
+                      reduceMotion
+                        ? {}
+                        : sortPulse
+                          ? { rotate: [0, -14, 14, 0] }
+                          : { rotate: [0, 0] }
+                    }
+                    transition={{ duration: 0.45, ease }}
+                  >
+                    <ArrowDownUp className="h-3.5 w-3.5 text-primary/80" strokeWidth={1.5} aria-hidden />
+                  </motion.span>
+                  Sort
+                </span>
                 <button
                   type="button"
                   onClick={() => {
                     setBucket("needs");
                     setSelectedIdx(0);
+                    triggerSortFeedback();
                   }}
                   className={cn(
                     "rounded-full px-3 py-1 text-xs font-medium transition-all duration-500",
@@ -208,6 +251,7 @@ export function ProductDemo() {
                   onClick={() => {
                     setBucket("all");
                     setSelectedIdx(0);
+                    triggerSortFeedback();
                   }}
                   className={cn(
                     "rounded-full px-3 py-1 text-xs font-medium transition-all duration-500",
@@ -226,32 +270,39 @@ export function ProductDemo() {
                     <motion.li
                       key={`${provider}-${t.subject}-${i}`}
                       layout
-                      initial={{ opacity: 0, x: -8 }}
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.35, ease }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ duration: 0.4, ease }}
                     >
                       <button
                         type="button"
                         onClick={() => setSelectedIdx(i)}
                         className={cn(
-                          "flex w-full flex-col rounded-2xl border px-4 py-3 text-left transition-all duration-500",
+                          "relative flex w-full flex-col overflow-hidden rounded-2xl border px-4 py-3 text-left transition-all duration-500",
                           selectedIdx === i
                             ? "border-primary/40 bg-primary/5 shadow-card"
                             : "border-transparent bg-muted/30 hover:border-border/60 hover:bg-muted/50",
                         )}
                       >
-                        <div className="flex items-start justify-between gap-2">
+                        {selectedIdx === i ? (
+                          <motion.span
+                            layoutId="demo-thread-active"
+                            className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-primary/25"
+                            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          />
+                        ) : null}
+                        <div className="relative flex items-start justify-between gap-2">
                           <span className="font-medium leading-snug text-foreground">{t.subject}</span>
                           <span className="shrink-0 text-[0.7rem] text-muted-foreground">{t.time}</span>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <div className="relative mt-2 flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-muted/90 px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
                             {t.bucket}
                           </span>
                           <span className="text-[0.65rem] text-muted-foreground">Priority · {t.score}</span>
                         </div>
-                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{t.snippet}</p>
+                        <p className="relative mt-2 line-clamp-2 text-sm text-muted-foreground">{t.snippet}</p>
                       </button>
                     </motion.li>
                   ))}
@@ -276,38 +327,75 @@ export function ProductDemo() {
                 <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} aria-hidden />
               </div>
 
-              <div className="min-h-[140px] rounded-2xl border border-border/60 bg-background/80 p-4 text-sm leading-relaxed text-foreground shadow-inner">
-                {phase === "idle" && (
-                  <p className="text-muted-foreground">
-                    Press <strong className="text-foreground">Generate draft</strong> to simulate AI
-                    composing a reply in your tone—then send it through the same provider you’re
-                    viewing.
-                  </p>
-                )}
-                {(phase === "generating" || phase === "ready") && (
-                  <p className="whitespace-pre-wrap">
-                    {typed}
-                    {phase === "generating" && (
-                      <motion.span
-                        animate={{ opacity: [1, 0.2, 1] }}
-                        transition={{ repeat: Infinity, duration: 0.8 }}
-                        className="inline-block w-2"
-                      >
-                        |
-                      </motion.span>
-                    )}
-                  </p>
-                )}
-                {phase === "sent" && (
-                  <motion.p
+              <div className="relative min-h-[148px] overflow-hidden rounded-2xl border border-border/60 bg-background/80 p-4 text-sm leading-relaxed text-foreground shadow-inner">
+                {phase === "generating" ? (
+                  <motion.div
+                    className="pointer-events-none absolute inset-0 rounded-2xl"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-2 text-primary"
                   >
-                    <Mail className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-                    Message queued — same thread, same unified timeline.
-                  </motion.p>
-                )}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/12 to-transparent"
+                      animate={reduceMotion ? {} : { x: ["-100%", "120%"] }}
+                      transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                    />
+                  </motion.div>
+                ) : null}
+                <div className="relative">
+                  {phase === "generating" ? (
+                    <p className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                      <Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
+                      Structuring reply
+                      <span className="flex gap-0.5">
+                        {[0, 1, 2].map((d) => (
+                          <motion.span
+                            key={d}
+                            className="inline-block h-1 w-1 rounded-full bg-primary/70"
+                            animate={reduceMotion ? {} : { y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+                            transition={{
+                              repeat: Infinity,
+                              duration: 0.9,
+                              delay: d * 0.12,
+                              ease: "easeInOut",
+                            }}
+                          />
+                        ))}
+                      </span>
+                    </p>
+                  ) : null}
+                  {phase === "idle" && (
+                    <p className="text-muted-foreground">
+                      Press <strong className="text-foreground">Generate draft</strong> to simulate AI
+                      composing a reply in your tone—then send it through the same provider you’re
+                      viewing.
+                    </p>
+                  )}
+                  {(phase === "generating" || phase === "ready") && (
+                    <p className="whitespace-pre-wrap">
+                      {typed}
+                      {phase === "generating" && (
+                        <motion.span
+                          animate={{ opacity: [1, 0.2, 1] }}
+                          transition={{ repeat: Infinity, duration: 0.8 }}
+                          className="inline-block w-2"
+                          aria-hidden
+                        >
+                          |
+                        </motion.span>
+                      )}
+                    </p>
+                  )}
+                  {phase === "sent" && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2 text-primary"
+                    >
+                      <Mail className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                      Message queued — same thread, same unified timeline.
+                    </motion.p>
+                  )}
+                </div>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">

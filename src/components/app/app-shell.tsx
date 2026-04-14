@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Cable, FileText, LayoutDashboard, LogOut, Mail, Settings } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants";
@@ -21,8 +21,17 @@ type AppShellProps = {
   children: React.ReactNode;
 };
 
+const navLinkClass = (active: boolean) =>
+  cn(
+    "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium outline-none transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    active
+      ? "bg-background text-foreground shadow-card"
+      : "text-muted-foreground hover:text-foreground",
+  );
+
 export function AppShell({ user, children }: AppShellProps) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const nav = [
     { href: "/inbox", label: "Dashboard", icon: LayoutDashboard },
     { href: "/inbox/accounts", label: "Accounts", icon: Cable },
@@ -36,46 +45,59 @@ export function AppShell({ user, children }: AppShellProps) {
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl"
+        className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55"
       >
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/80 ring-1 ring-border/60">
+        <div className="mx-auto grid h-16 max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3 justify-self-start">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted/80 ring-1 ring-border/60">
               <Mail className="h-5 w-5 text-foreground" strokeWidth={1.5} aria-hidden />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{APP_NAME}</p>
-              <p className="font-medium leading-tight text-foreground">{user.name}</p>
+              <p className="truncate font-medium leading-tight text-foreground">{user.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-1 rounded-full bg-muted/50 p-1 md:flex">
+
+          <nav
+            className="hidden w-max justify-self-center md:flex"
+            aria-label="Main navigation"
+          >
+            <div className="flex items-center gap-1 rounded-full bg-muted/50 p-1">
               {nav.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href;
                 return (
-                  <Link
+                  <motion.span
                     key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-                      active
-                        ? "bg-background text-foreground shadow-card"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
+                    whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                    className="inline-flex"
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    {item.label}
-                  </Link>
+                    <Link
+                      href={item.href}
+                      className={navLinkClass(active)}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      {item.label}
+                    </Link>
+                  </motion.span>
                 );
               })}
             </div>
-            <span className="hidden text-sm text-muted-foreground sm:inline">{user.email}</span>
+          </nav>
+
+          <div className="flex min-w-0 items-center justify-self-end gap-2">
+            <span
+              className="hidden max-w-[11rem] truncate text-sm text-muted-foreground sm:inline lg:max-w-[14rem]"
+              title={user.email}
+            >
+              {user.email}
+            </span>
             <Button
               variant="secondary"
               size="sm"
               type="button"
-              className="gap-2"
+              className="shrink-0 gap-2"
               onClick={() => signOut({ callbackUrl: "/" })}
             >
               <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden />
@@ -85,9 +107,52 @@ export function AppShell({ user, children }: AppShellProps) {
         </div>
       </motion.header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-10 lg:px-8">{children}</div>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-10 pb-24 md:pb-10 lg:px-8">
+        {children}
+      </div>
 
-      <footer className="border-t border-border/40 py-8 text-center text-xs text-muted-foreground">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/40 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55 md:hidden"
+        aria-label="Main navigation"
+      >
+        <div
+          className="mx-auto flex max-w-6xl items-stretch justify-around px-2 pt-1"
+          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        >
+          {nav.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href;
+            return (
+              <motion.span
+                key={item.href}
+                whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+                className="flex min-w-0 flex-1 justify-center"
+              >
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex min-h-11 min-w-[3.5rem] max-w-full flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-[11px] font-medium outline-none transition-colors duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    active ? "text-foreground" : "text-muted-foreground",
+                  )}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200",
+                      active ? "bg-background shadow-card" : "bg-transparent",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                  </span>
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              </motion.span>
+            );
+          })}
+        </div>
+      </nav>
+
+      <footer className="border-t border-border/40 py-8 pb-[calc(5rem+env(safe-area-inset-bottom))] text-center text-xs text-muted-foreground md:pb-8">
         <Link className="transition-colors hover:text-foreground" href="/">
           Back to home
         </Link>

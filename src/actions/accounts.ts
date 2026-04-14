@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * Account linking uses the form + demo seed path. Real OAuth is not connected.
+ * When implementing Google / Microsoft, use env: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+ * MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_TENANT_ID (see `.env.example`).
+ */
+
 import { FocusBucket, MessageDirection, ProviderType, SyncStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";

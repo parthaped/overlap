@@ -44,6 +44,14 @@ export function AccountConnections({ accounts }: { accounts: AccountRow[] }) {
         <p className="mt-2 text-sm text-muted-foreground">
           Add providers into one workspace. Use Demo mode to seed example threads instantly.
         </p>
+        {/*
+          Future OAuth (not wired): add buttons that start NextAuth or a dedicated OAuth route.
+          Env placeholders — GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+          MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_TENANT_ID (see .env.example).
+          Example redirect URIs:
+          - ${NEXTAUTH_URL}/api/auth/callback/google
+          - ${NEXTAUTH_URL}/api/auth/callback/azure-ad
+        */}
         <form action={formAction} className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="provider">Provider</Label>
