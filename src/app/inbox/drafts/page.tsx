@@ -21,6 +21,7 @@ export default async function DraftsPage() {
       approvedAt: true,
       sentAt: true,
       createdAt: true,
+      threadId: true,
       thread: {
         select: { normalizedSubject: true },
       },
@@ -33,6 +34,7 @@ export default async function DraftsPage() {
     generatedBody: draft.generatedBody,
     tone: draft.tone,
     createdAt: draft.createdAt.toISOString(),
+    threadId: draft.threadId,
     threadSubject: draft.thread.normalizedSubject,
     status: draft.sentAt ? "Sent" : draft.approvedAt ? "Approved" : "Generated",
   }));

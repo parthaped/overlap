@@ -32,6 +32,18 @@ enum FocusBucket {
   SENT
   DRAFTS
   TRASH
+  PROMOTIONS
+  UPDATES
+  SOCIAL
+  NEWSLETTERS
+}
+
+enum ThreadCategory {
+  PRIMARY
+  PROMOTIONAL
+  UPDATE
+  SOCIAL
+  NEWSLETTER
 }
 
 enum MessageDirection {
@@ -67,6 +79,7 @@ model User {
   draftSuggestions          DraftSuggestion[]
   calendarConnections       CalendarConnection[]
   auditLogs                 AuditLog[]
+  copilotMessages           CopilotMessage[]
 
   @@index([onboardedAt])
 }
@@ -110,7 +123,12 @@ model MessageThread {
   aiSummary         String?
   aiPriorityScore   Float              @default(0)
   focusBucket       FocusBucket        @default(OTHER)
+  category          ThreadCategory     @default(PRIMARY)
   aiReasoningJson   Json?
+  snoozeUntil       DateTime?
+  isArchived        Boolean            @default(false)
+  isUnread          Boolean            @default(true)
+  isStarred         Boolean            @default(false)
   deletedAt         DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -120,7 +138,10 @@ model MessageThread {
   draftSuggestions  DraftSuggestion[]
 
   @@index([userId, focusBucket, lastMessageAt(sort: Desc)])
+  @@index([userId, category, lastMessageAt(sort: Desc)])
   @@index([userId, needsReply, waitingOnOther])
+  @@index([userId, snoozeUntil])
+  @@index([userId, isArchived, lastMessageAt(sort: Desc)])
 }
 
 model EmailMessage {
@@ -149,6 +170,8 @@ model EmailMessage {
   aiClassificationJson Json?
   needsReply          Boolean          @default(false)
   actionDeadlineAt    DateTime?
+  senderEmail         String?
+  senderDomain        String?
   deletedAt           DateTime?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -160,6 +183,8 @@ model EmailMessage {
   @@unique([linkedAccountId, providerMessageId])
   @@index([threadId, receivedAt(sort: Desc)])
   @@index([linkedAccountId, sentAt(sort: Desc)])
+  @@index([linkedAccountId, senderDomain])
+  @@index([linkedAccountId, senderEmail])
 }
 
 model Attachment {
@@ -236,4 +261,17 @@ model AuditLog {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
+}
+
+model CopilotMessage {
+  id            String   @id @default(cuid())
+  userId        String
+  conversationId String
+  role          String
+  content       String
+  toolCallsJson Json?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, conversationId, createdAt])
 }

@@ -30,7 +30,7 @@ const providerOptions: { id: ProviderType; label: string }[] = [
 const initialState: AccountActionState = {};
 
 const panelClass =
-  "relative overflow-hidden rounded-[1.85rem] border border-border/50 bg-card/88 shadow-soft ring-1 ring-border/30 backdrop-blur-[2px]";
+  "rounded-2xl border border-border/60 bg-card/55 p-5 sm:p-6";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -80,8 +80,8 @@ export function AccountConnections({
   googleOAuthConfigured: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(connectAccount, initialState);
-  const [formProvider, setFormProvider] = useState<string>("DEMO");
-  const [formMode, setFormMode] = useState<string>("demo");
+  const [formProvider, setFormProvider] = useState<string>("IMAP");
+  const [formMode, setFormMode] = useState<string>("manual");
   const searchParams = useSearchParams();
   const flash = useMemo(
     () => oauthFlashMessage(searchParams.get("error"), searchParams.get("success")),
@@ -89,25 +89,24 @@ export function AccountConnections({
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease }}
-        className={cn(panelClass, "p-6 sm:p-8")}
+        transition={{ duration: 0.4, ease }}
+        className={cn(panelClass)}
       >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/28 to-transparent" />
-        <h2 className="font-serif text-2xl tracking-tight text-foreground sm:text-[1.65rem]">Connect account</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Link real Gmail with Google OAuth, or add a demo inbox for testing without external mail.
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">Connect account</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Link Gmail via OAuth, or add a mailbox manually.
         </p>
 
         {flash ? (
           <p
             className={cn(
-              "mt-4 rounded-2xl px-4 py-3 text-sm leading-relaxed",
+              "mt-3 rounded-lg px-3 py-2 text-[13px]",
               flash.kind === "success"
-                ? "border border-emerald-500/25 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200/90"
+                ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-800"
                 : "border border-destructive/25 bg-destructive/10 text-destructive",
             )}
           >
@@ -115,7 +114,7 @@ export function AccountConnections({
           </p>
         ) : null}
 
-        <div className="mt-8 space-y-3">
+        <div className="mt-5 space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Gmail & Google Workspace
           </p>
@@ -123,34 +122,33 @@ export function AccountConnections({
             <Link
               href="/api/integrations/google/start"
               className={cn(
-                buttonVariants({ variant: "primary", size: "lg" }),
-                "h-12 w-full max-w-md justify-center gap-3 rounded-2xl shadow-card transition-all duration-300 hover:-translate-y-0.5 sm:w-auto",
+                buttonVariants({ variant: "primary", size: "md" }),
+                "h-10 w-full max-w-md justify-center gap-2 rounded-lg sm:w-auto",
               )}
             >
-              <GoogleMark className="h-5 w-5" />
+              <GoogleMark className="h-4 w-4" />
               Continue with Google
             </Link>
           ) : (
-            <p className="max-w-xl rounded-2xl border border-dashed border-border/60 bg-muted/15 px-4 py-3 text-sm text-muted-foreground">
+            <p className="max-w-xl rounded-lg border border-dashed border-border/60 bg-muted/15 px-3 py-2 text-[13px] text-muted-foreground">
               Add <span className="font-mono text-xs">GOOGLE_CLIENT_ID</span> and{" "}
               <span className="font-mono text-xs">GOOGLE_CLIENT_SECRET</span> to your environment, then add the
               redirect URI from <span className="font-mono text-xs">.env.example</span> in Google Cloud Console.
             </p>
           )}
-          <p className="text-xs text-muted-foreground">
-            Requests offline access so tokens can be refreshed. Enable <strong className="font-medium text-foreground">Gmail API</strong>{" "}
-            on the same Google Cloud project as your OAuth client.
+          <p className="text-[11px] text-muted-foreground">
+            Offline access; refreshable tokens. Enable <strong className="font-medium text-foreground">Gmail API</strong> on the same project.
           </p>
         </div>
 
-        <div className="mt-10 border-t border-border/40 pt-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Demo or manual placeholder
+        <div className="mt-8 border-t border-border/40 pt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Manual mailbox
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Seeded demo threads are great for exploring the product without Gmail.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add a mailbox without OAuth. Useful for IMAP, internal accounts, or staging.
           </p>
-          <form action={formAction} className="mt-6 grid gap-4 sm:grid-cols-2">
+          <form action={formAction} className="mt-4 grid gap-3 sm:grid-cols-2">
             <input type="hidden" name="provider" value={formProvider} />
             <input type="hidden" name="mode" value={formMode} />
             <div className="space-y-2">
@@ -175,8 +173,8 @@ export function AccountConnections({
                   <SelectValue placeholder="Choose mode" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="demo">Demo seeded inbox</SelectItem>
-                  <SelectItem value="manual">Manual (placeholder)</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="demo">Sample inbox (testing)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -188,7 +186,7 @@ export function AccountConnections({
                 placeholder="Work Mail"
                 required
                 minLength={2}
-                className="rounded-2xl border-border/60 bg-background/80 ring-1 ring-border/25"
+                className="h-10 rounded-lg"
               />
             </div>
             <div className="space-y-2">
@@ -199,7 +197,7 @@ export function AccountConnections({
                 type="email"
                 placeholder="you@company.com"
                 required
-                className="rounded-2xl border-border/60 bg-background/80 ring-1 ring-border/25"
+                className="h-10 rounded-lg"
               />
             </div>
             <label className="col-span-full flex items-center gap-2 text-sm text-muted-foreground">
@@ -218,48 +216,47 @@ export function AccountConnections({
               variant="secondary"
               className="col-span-full transition-all duration-300 hover:-translate-y-0.5 sm:col-span-1"
             >
-              {isPending ? "Connecting…" : "Add demo / manual account"}
+              {isPending ? "Connecting…" : "Add mailbox"}
             </Button>
           </form>
         </div>
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.06, ease }}
-        className={cn(panelClass, "p-6 sm:p-8")}
+        transition={{ duration: 0.4, delay: 0.04, ease }}
+        className={cn(panelClass)}
       >
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border/80 to-transparent" />
-        <h2 className="font-serif text-2xl tracking-tight text-foreground sm:text-[1.65rem]">Connected providers</h2>
-        <div className="mt-6 space-y-3">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">Connected providers</h2>
+        <div className="mt-4 space-y-2">
           {accounts.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-border/55 bg-muted/15 p-6 text-sm text-muted-foreground">
+            <p className="rounded-lg border border-dashed border-border/55 bg-muted/15 p-4 text-sm text-muted-foreground">
               No accounts connected yet.
             </p>
           ) : (
             accounts.map((account, index) => (
               <motion.div
                 key={account.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05, ease }}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/45 bg-background/75 p-4 ring-1 ring-border/20 transition-all duration-300 hover:border-border/60 hover:shadow-card"
+                transition={{ duration: 0.3, delay: index * 0.03, ease }}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/55 bg-background/70 p-3 transition-colors hover:border-border"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span
-                      className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
+                      className="h-2 w-2 rounded-full"
                       style={{ backgroundColor: account.colorTag || "#5bbabd" }}
                     />
-                    <p className="font-medium text-foreground">{account.displayName}</p>
+                    <p className="text-sm font-medium text-foreground">{account.displayName}</p>
                     {account.isPrimary ? (
-                      <span className="rounded-full bg-foreground px-2 py-0.5 text-[10px] font-medium text-background">
+                      <span className="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-medium text-background">
                         Primary
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
                     {account.providerType} · {account.providerAccountEmail} · {account.syncStatus}
                   </p>
                 </div>

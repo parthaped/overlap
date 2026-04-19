@@ -2,109 +2,338 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
-  ArrowDownUp,
-  ChevronRight,
+  Archive,
+  Cable,
+  Clock,
+  FileText,
   Inbox,
+  LayoutDashboard,
   Loader2,
   Mail,
+  MailOpen,
+  Megaphone,
+  Newspaper,
+  Search,
   Send,
+  Settings,
+  Shield,
   Sparkles,
+  Star,
   Users,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+const ease = [0.22, 1, 0.36, 1] as const;
 
-type ProviderId = "google" | "microsoft" | "icloud";
+type BucketId =
+  | "FOCUS"
+  | "NEEDS_REPLY"
+  | "WAITING_ON"
+  | "UPDATES"
+  | "PROMOTIONS"
+  | "SOCIAL"
+  | "NEWSLETTERS";
 
-const providers: { id: ProviderId; label: string; email: string; color: string }[] = [
-  { id: "google", label: "Google", email: "you@studio.design", color: "#5bbabd" },
-  { id: "microsoft", label: "Microsoft", email: "you@consulting.team", color: "#f68d4f" },
-  { id: "icloud", label: "iCloud", email: "you@icloud.com", color: "#8e8e93" },
-];
+type Chip =
+  | "VIP"
+  | "Deadline"
+  | "Meeting"
+  | "Promotional"
+  | "Newsletter"
+  | "Social"
+  | "Update"
+  | "Finance"
+  | "High-stakes"
+  | "Muted sender";
 
-const demoThreads: Record<
-  ProviderId,
-  { subject: string; bucket: string; score: string; snippet: string; time: string }[]
-> = {
-  google: [
-    {
-      subject: "Investor prep — headline check",
-      bucket: "Needs reply",
-      score: "High",
-      snippet: "Could you confirm the revised metric headline before 7pm?",
-      time: "12m ago",
-    },
-    {
-      subject: "April partner newsletter",
-      bucket: "Other",
-      score: "Low",
-      snippet: "Portfolio updates and summit ticket code inside.",
-      time: "2d ago",
-    },
-  ],
-  microsoft: [
-    {
-      subject: "Board deck edits before Friday",
-      bucket: "Needs reply",
-      score: "High",
-      snippet: "Tighten the AI operations slide and KPI narrative.",
-      time: "3h ago",
-    },
-    {
-      subject: "Proposal timing",
-      bucket: "Waiting on",
-      score: "Med",
-      snippet: "Waiting on Morgan’s team after your April 8 send.",
-      time: "5d ago",
-    },
-  ],
-  icloud: [
-    {
-      subject: "Family calendar — spring trip",
-      bucket: "Focus",
-      score: "Med",
-      snippet: "Two weekends in May work best on your shared calendar.",
-      time: "1d ago",
-    },
-  ],
+type PreviewThread = {
+  id: string;
+  bucket: BucketId;
+  sender: string;
+  senderInitials: string;
+  senderEmail: string;
+  accountColor: string;
+  accountLabel: string;
+  subject: string;
+  preview: string;
+  body: string;
+  time: string;
+  unread?: boolean;
+  starred?: boolean;
+  chips: Chip[];
+  insight: { summary: string; reasons: string[]; actionItems?: string[]; score: number };
+  defaultDraft?: string;
 };
 
-const draftPhrases = [
-  "Thanks for the patience — here’s a concise reply that matches your tone…",
-  "Hi — confirming the headline reads clearly and aligns with last week’s deck.",
-  "I can do Tuesday 2–4pm or Wednesday 10–12 for the roadmap session.",
+const buckets: {
+  id: BucketId;
+  label: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+}[] = [
+  { id: "FOCUS", label: "Focus", icon: Sparkles },
+  { id: "NEEDS_REPLY", label: "Needs reply", icon: Mail },
+  { id: "WAITING_ON", label: "Waiting on", icon: MailOpen },
+  { id: "UPDATES", label: "Updates", icon: Inbox },
+  { id: "PROMOTIONS", label: "Promotions", icon: Megaphone },
+  { id: "SOCIAL", label: "Social", icon: Users },
+  { id: "NEWSLETTERS", label: "Newsletters", icon: Newspaper },
 ];
+
+const chipStyles: Record<Chip, string> = {
+  VIP: "bg-amber-100/80 text-amber-900 ring-amber-200/50",
+  Deadline: "bg-red-100/80 text-red-900 ring-red-200/40",
+  Meeting: "bg-blue-100/80 text-blue-900 ring-blue-200/40",
+  Promotional: "bg-pink-100/70 text-pink-900 ring-pink-200/40",
+  Newsletter: "bg-violet-100/70 text-violet-900 ring-violet-200/40",
+  Social: "bg-sky-100/70 text-sky-900 ring-sky-200/40",
+  Update: "bg-slate-200/70 text-slate-800 ring-slate-300/40",
+  Finance: "bg-emerald-100/80 text-emerald-900 ring-emerald-200/40",
+  "High-stakes": "bg-orange-100/80 text-orange-900 ring-orange-200/40",
+  "Muted sender": "bg-zinc-200/70 text-zinc-700 ring-zinc-300/40",
+};
+
+const allThreads: PreviewThread[] = [
+  {
+    id: "t-focus-1",
+    bucket: "FOCUS",
+    sender: "Sarah Chen",
+    senderInitials: "SC",
+    senderEmail: "sarah@meridian.co",
+    accountColor: "#5bbabd",
+    accountLabel: "Atelier Studio",
+    subject: "Q2 narrative — alignment before Friday",
+    preview: "Could you confirm the revised metric headline before 7pm? Board read goes out Friday.",
+    body:
+      "Hi — could you confirm the revised metric headline before 7pm? The board read goes out Friday morning and I want to lock the narrative. Pasting the latest line below.",
+    time: "12m",
+    unread: true,
+    chips: ["VIP", "Deadline"],
+    insight: {
+      summary: "Time-sensitive ask from a VIP. Confirm headline before 7pm tonight.",
+      reasons: ["VIP sender (Meridian.co)", "Explicit 7pm deadline", "Tied to Friday board read"],
+      actionItems: ["Reply with confirmation", "Lock board narrative"],
+      score: 94,
+    },
+    defaultDraft:
+      "Hi Sarah — confirmed. The headline reads cleanly and matches last week's deck. I tightened the KPI line so it mirrors the appendix without repeating the chart. Sending the locked version now.",
+  },
+  {
+    id: "t-focus-2",
+    bucket: "FOCUS",
+    sender: "Morgan Diaz",
+    senderInitials: "MD",
+    senderEmail: "morgan@partnerlegal.com",
+    accountColor: "#5bbabd",
+    accountLabel: "Atelier Studio",
+    subject: "Contract redlines for review",
+    preview: "Two notes from legal on indemnification — both should be quick.",
+    body:
+      "Sharing two redlines from legal on the indemnification clause. Both are minor edits but want your sign-off before sending back.",
+    time: "1h",
+    chips: ["High-stakes", "Finance"],
+    insight: {
+      summary: "Legal redlines — quick review needed before sending back to counterparty.",
+      reasons: ["Tier-1 keyword: contract", "Mentions legal team", "Awaiting your sign-off"],
+      actionItems: ["Review two redlines", "Confirm or counter"],
+      score: 88,
+    },
+    defaultDraft:
+      "Morgan — reviewed both. Edit 1 looks good as drafted. On Edit 2, can we keep the original cap language? Otherwise, ship it.",
+  },
+  {
+    id: "t-needs-1",
+    bucket: "NEEDS_REPLY",
+    sender: "John Park",
+    senderInitials: "JP",
+    senderEmail: "john@northstarhq.com",
+    accountColor: "#5bbabd",
+    accountLabel: "Atelier Studio",
+    subject: "Roadmap working session next week",
+    preview: "Tuesday or Wednesday afternoon would be ideal — 45 min should be plenty.",
+    body:
+      "Hey Alex — could you send a few times next week for a 45-minute roadmap working session? Tuesday or Wednesday afternoon would be ideal.",
+    time: "3h",
+    unread: true,
+    chips: ["Meeting"],
+    insight: {
+      summary: "Meeting request. Offer Tue 2–4pm or Wed 10–12 from your calendar.",
+      reasons: ["Asks for availability", "Calendar shows two open windows"],
+      actionItems: ["Reply with availability"],
+      score: 78,
+    },
+    defaultDraft:
+      "Hi John — happy to lock it in. Tuesday 2–4pm or Wednesday 10–12 both work on my side. Send the invite for whichever fits best and I'll add the working doc.",
+  },
+  {
+    id: "t-needs-2",
+    bucket: "NEEDS_REPLY",
+    sender: "Priya Raman",
+    senderInitials: "PR",
+    senderEmail: "priya@consultingteam.io",
+    accountColor: "#f68d4f",
+    accountLabel: "Consulting Team",
+    subject: "Stakeholder map — quick sanity check",
+    preview: "I added Marcus and pruned the procurement cluster. Does this look right?",
+    body: "Pinged you on the stakeholder map — added Marcus and pruned the procurement cluster.",
+    time: "5h",
+    chips: [],
+    insight: {
+      summary: "Quick sanity-check request. 30-second reply will close the loop.",
+      reasons: ["Direct yes/no question", "Owner waiting on you"],
+      actionItems: ["Acknowledge or amend"],
+      score: 64,
+    },
+    defaultDraft:
+      "Priya — looks right. Marcus is the right primary; agree on pruning procurement until phase two.",
+  },
+  {
+    id: "t-waiting-1",
+    bucket: "WAITING_ON",
+    sender: "You → Vendor Ops",
+    senderInitials: "Y",
+    senderEmail: "vendor@partner.com",
+    accountColor: "#5bbabd",
+    accountLabel: "Atelier Studio",
+    subject: "Following up on April 8 send",
+    preview: "Bumping this back to the top — any update on the SOW?",
+    body: "Bumping this back to the top — any update on the SOW we sent on April 8?",
+    time: "2d",
+    chips: [],
+    insight: {
+      summary: "You're waiting on Vendor Ops. Last bump was 2 days ago.",
+      reasons: ["Outbound thread", "No reply in 5+ days"],
+      actionItems: ["Wait or send reminder"],
+      score: 42,
+    },
+  },
+  {
+    id: "t-update-1",
+    bucket: "UPDATES",
+    sender: "GitHub",
+    senderInitials: "GH",
+    senderEmail: "notifications@github.com",
+    accountColor: "#8e8e93",
+    accountLabel: "Atelier Studio",
+    subject: "[atelier/product] PR opened",
+    preview: "user@atelier opened pull request #284 in atelier/product.",
+    body: "user@atelier opened pull request #284 in atelier/product.",
+    time: "4h",
+    chips: ["Update", "Muted sender"],
+    insight: {
+      summary: "GitHub notification. No reply needed.",
+      reasons: ["Automated update", "Sender domain: github.com"],
+      score: 18,
+    },
+  },
+  {
+    id: "t-promo-1",
+    bucket: "PROMOTIONS",
+    sender: "Spring Lookbook",
+    senderInitials: "SL",
+    senderEmail: "deals@news.mailchimp.com",
+    accountColor: "#8e8e93",
+    accountLabel: "Atelier Studio",
+    subject: "30% off this weekend only",
+    preview: "Don't miss our spring sale. Unsubscribe at the bottom.",
+    body: "Don't miss our spring sale. 30% off this weekend only. Unsubscribe at the bottom.",
+    time: "1d",
+    chips: ["Promotional"],
+    insight: {
+      summary: "Promotional. Safe to bulk archive.",
+      reasons: ["Mailchimp domain", "Subject keyword: % off"],
+      score: 8,
+    },
+  },
+  {
+    id: "t-social-1",
+    bucket: "SOCIAL",
+    sender: "LinkedIn",
+    senderInitials: "in",
+    senderEmail: "invitations@linkedin.com",
+    accountColor: "#8e8e93",
+    accountLabel: "Atelier Studio",
+    subject: "Daniel invited you to connect",
+    preview: "Daniel would like to connect with you on LinkedIn.",
+    body: "Daniel would like to connect with you on LinkedIn.",
+    time: "1d",
+    chips: ["Social"],
+    insight: {
+      summary: "LinkedIn invite. Low priority.",
+      reasons: ["Sender: linkedin.com", "Social network notification"],
+      score: 12,
+    },
+  },
+  {
+    id: "t-newsletter-1",
+    bucket: "NEWSLETTERS",
+    sender: "Stratechery",
+    senderInitials: "St",
+    senderEmail: "newsletter@stratechery.com",
+    accountColor: "#8e8e93",
+    accountLabel: "Atelier Studio",
+    subject: "Weekly: platform shifts & strategy notes",
+    preview: "This week: enterprise AI distribution and the new shape of vertical software.",
+    body: "This week: enterprise AI distribution and the new shape of vertical software.",
+    time: "1d",
+    chips: ["Newsletter"],
+    insight: {
+      summary: "Newsletter. Read when you have time.",
+      reasons: ["Subscription cadence: weekly", "No action required"],
+      score: 22,
+    },
+  },
+];
+
+function bucketCounts() {
+  return buckets.reduce<Record<BucketId, number>>(
+    (acc, b) => {
+      acc[b.id] = allThreads.filter((t) => t.bucket === b.id).length;
+      return acc;
+    },
+    {} as Record<BucketId, number>,
+  );
+}
+
+const counts = bucketCounts();
 
 export function ProductDemo() {
   const reduceMotion = useReducedMotion();
-  const [provider, setProvider] = useState<ProviderId>("google");
-  const [bucket, setBucket] = useState<"all" | "needs">("needs");
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  const [phase, setPhase] = useState<"idle" | "generating" | "ready" | "sent">("idle");
+  const [bucket, setBucket] = useState<BucketId>("FOCUS");
+  const [selectedId, setSelectedId] = useState<string>(allThreads[0]!.id);
+  const [phase, setPhase] = useState<"idle" | "drafting" | "ready" | "sent">("idle");
   const [typed, setTyped] = useState("");
-  const [sendPulse, setSendPulse] = useState(false);
-  const [sortPulse, setSortPulse] = useState(false);
+  const [tone, setTone] = useState("Professional but warm");
 
-  const threads = demoThreads[provider];
-  const filtered = useMemo(
-    () =>
-      bucket === "needs"
-        ? threads.filter((t) => t.bucket.toLowerCase().includes("need") || t.bucket === "Focus")
-        : threads,
-    [threads, bucket],
+  const filtered = useMemo(() => allThreads.filter((t) => t.bucket === bucket), [bucket]);
+  const selected = useMemo(
+    () => filtered.find((t) => t.id === selectedId) ?? filtered[0] ?? allThreads[0]!,
+    [filtered, selectedId],
   );
 
-  const safeIdx = Math.max(0, Math.min(selectedIdx, Math.max(0, filtered.length - 1)));
-  const selected = filtered[safeIdx] ?? filtered[0];
+  useEffect(() => {
+    if (filtered.length === 0) return;
+    if (!filtered.some((t) => t.id === selectedId)) {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setSelectedId(filtered[0]!.id);
+      setPhase("idle");
+      setTyped("");
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [filtered, selectedId]);
 
-  const runDemo = () => {
-    setPhase("generating");
-    setSendPulse(false);
+  const generateDraft = () => {
+    if (!selected.defaultDraft) {
+      setPhase("ready");
+      setTyped(
+        "Thanks — I have everything I need to act on this. I'll follow up shortly with the next step.",
+      );
+      return;
+    }
+    setPhase("drafting");
     setTyped("");
-    const target = draftPhrases[safeIdx % draftPhrases.length];
+    const target = selected.defaultDraft;
     let i = 0;
     const id = window.setInterval(() => {
       i += 1;
@@ -113,24 +342,15 @@ export function ProductDemo() {
         window.clearInterval(id);
         setPhase("ready");
       }
-    }, 22);
+    }, 18);
   };
 
-  const sendDemo = () => {
-    setSendPulse(true);
+  const sendDraft = () => {
     setPhase("sent");
     window.setTimeout(() => {
-      setSendPulse(false);
       setPhase("idle");
       setTyped("");
-    }, 1600);
-  };
-
-  const ease = [0.22, 1, 0.36, 1] as const;
-
-  const triggerSortFeedback = () => {
-    setSortPulse(true);
-    window.setTimeout(() => setSortPulse(false), 500);
+    }, 1800);
   };
 
   return (
@@ -145,7 +365,7 @@ export function ProductDemo() {
           transition={{ duration: 0.6, ease }}
           className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground"
         >
-          Live preview
+          The product
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 12 }}
@@ -154,7 +374,7 @@ export function ProductDemo() {
           transition={{ duration: 0.65, delay: 0.05, ease }}
           className="mt-4 text-center font-serif text-3xl tracking-tight text-foreground sm:text-4xl"
         >
-          One surface. Every provider. Same calm rhythm.
+          The exact dashboard you&apos;ll open every morning.
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 12 }}
@@ -163,8 +383,8 @@ export function ProductDemo() {
           transition={{ duration: 0.65, delay: 0.1, ease }}
           className="mx-auto mt-4 max-w-2xl text-center text-lg text-muted-foreground"
         >
-          Switch accounts, triage by bucket, and watch a reply draft appear—without leaving this
-          layout.
+          Switch buckets, open a thread, watch the AI reader generate a reply in your tone — the
+          same UI, chips, and shortcuts you use inside the app.
         </motion.p>
 
         <motion.div
@@ -172,283 +392,417 @@ export function ProductDemo() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.75, delay: 0.06, ease }}
-          className="mt-14 overflow-hidden rounded-[1.85rem] border border-border/50 bg-card/92 shadow-soft ring-1 ring-border/35 backdrop-blur-[2px]"
+          className="mt-14 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl ring-1 ring-border/40"
         >
-          {/* App chrome */}
-          <div className="flex flex-col gap-0 border-b border-border/50 bg-muted/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted/90 ring-1 ring-border/50">
-                <Inbox className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-              </div>
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Unified inbox
-                </p>
-                <p className="text-sm font-medium text-foreground">Demo workspace</p>
-              </div>
-            </div>
-
-            <Tabs
-              value={provider}
-              onValueChange={(v) => {
-                setProvider(v as ProviderId);
-                setSelectedIdx(0);
-              }}
-              className="w-full sm:w-auto"
-            >
-              <TabsList className="grid h-10 w-full grid-cols-3 gap-1 rounded-2xl bg-background/80 p-1 sm:w-auto sm:min-w-[280px]">
-                {providers.map((p) => (
-                  <TabsTrigger
-                    key={p.id}
-                    value={p.id}
-                    className="rounded-xl px-2 py-1.5 text-xs font-medium transition-all duration-500 data-[state=active]:shadow-card sm:text-sm"
-                  >
-                    <span className="mr-1.5 inline-block h-2 w-2 rounded-full" style={{ background: p.color }} />
-                    {p.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+          {/* Browser chrome */}
+          <div className="flex items-center gap-1.5 border-b border-border/60 bg-muted/30 px-3 py-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+            <span className="ml-3 text-[10.5px] font-medium text-muted-foreground">overlap.app/inbox</span>
           </div>
 
-          <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-            {/* Thread list */}
-            <div className="border-b border-border/50 p-4 lg:border-b-0 lg:border-r">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <motion.span
-                    animate={
-                      reduceMotion
-                        ? {}
-                        : sortPulse
-                          ? { rotate: [0, -14, 14, 0] }
-                          : { rotate: [0, 0] }
-                    }
-                    transition={{ duration: 0.45, ease }}
-                  >
-                    <ArrowDownUp className="h-3.5 w-3.5 text-primary/80" strokeWidth={1.5} aria-hidden />
-                  </motion.span>
-                  Sort
+          <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr]">
+            {/* Sidebar */}
+            <aside className="hidden flex-col border-r border-border/60 bg-card/40 px-3 py-4 lg:flex">
+              <div className="flex items-center gap-2 px-2 pb-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-background">
+                  <Mail className="h-4 w-4" strokeWidth={1.75} />
                 </span>
+                <span className="text-sm font-semibold text-foreground">Overlap</span>
+              </div>
+
+              <div className="my-2 space-y-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setBucket("needs");
-                    setSelectedIdx(0);
-                    triggerSortFeedback();
-                  }}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-all duration-500",
-                    bucket === "needs"
-                      ? "bg-foreground text-background"
-                      : "bg-muted/70 text-muted-foreground hover:text-foreground",
-                  )}
+                  className="flex w-full items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5 text-[11px] text-muted-foreground"
                 >
-                  Needs reply & focus
+                  <Search className="h-3 w-3" strokeWidth={1.5} />
+                  Search · ⌘K
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setBucket("all");
-                    setSelectedIdx(0);
-                    triggerSortFeedback();
-                  }}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-all duration-500",
-                    bucket === "all"
-                      ? "bg-foreground text-background"
-                      : "bg-muted/70 text-muted-foreground hover:text-foreground",
-                  )}
+                  className="flex w-full items-center gap-2 rounded-md bg-foreground/95 px-2 py-1.5 text-[11px] font-medium text-background"
                 >
-                  All threads
+                  <Sparkles className="h-3 w-3" strokeWidth={1.75} />
+                  Ask Copilot
                 </button>
               </div>
 
-              <ul className="space-y-2">
-                <AnimatePresence mode="popLayout">
-                  {filtered.map((t, i) => (
-                    <motion.li
-                      key={`${provider}-${t.subject}-${i}`}
-                      layout
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      transition={{ duration: 0.4, ease }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setSelectedIdx(i)}
-                        className={cn(
-                          "relative flex w-full flex-col overflow-hidden rounded-2xl border px-4 py-3 text-left transition-all duration-500",
-                          selectedIdx === i
-                            ? "border-primary/40 bg-primary/5 shadow-card"
-                            : "border-transparent bg-muted/30 hover:border-border/60 hover:bg-muted/50",
-                        )}
-                      >
-                        {selectedIdx === i ? (
-                          <motion.span
-                            layoutId="demo-thread-active"
-                            className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-primary/25"
-                            transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                          />
-                        ) : null}
-                        <div className="relative flex items-start justify-between gap-2">
-                          <span className="font-medium leading-snug text-foreground">{t.subject}</span>
-                          <span className="shrink-0 text-[0.7rem] text-muted-foreground">{t.time}</span>
-                        </div>
-                        <div className="relative mt-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-muted/90 px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                            {t.bucket}
-                          </span>
-                          <span className="text-[0.65rem] text-muted-foreground">Priority · {t.score}</span>
-                        </div>
-                        <p className="relative mt-2 line-clamp-2 text-sm text-muted-foreground">{t.snippet}</p>
-                      </button>
-                    </motion.li>
-                  ))}
-                </AnimatePresence>
-              </ul>
-
-              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-                <Users className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
-                Same UI for {providers.find((p) => p.id === provider)?.email}
-              </div>
-            </div>
-
-            {/* Compose / AI */}
-            <div className="flex flex-col p-4 sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Composer
-                  </p>
-                  <p className="font-medium text-foreground">{selected?.subject ?? "Select a thread"}</p>
-                </div>
-                <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} aria-hidden />
-              </div>
-
-              <div className="relative min-h-[148px] overflow-hidden rounded-2xl border border-border/60 bg-background/80 p-4 text-sm leading-relaxed text-foreground shadow-inner">
-                {phase === "generating" ? (
-                  <motion.div
-                    className="pointer-events-none absolute inset-0 rounded-2xl"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+              <nav className="mt-1 space-y-0.5">
+                {[
+                  { label: "Inbox", icon: LayoutDashboard, active: true },
+                  { label: "Drafts", icon: FileText },
+                  { label: "Accounts", icon: Cable },
+                  { label: "Settings", icon: Settings },
+                ].map(({ label, icon: Icon, active }) => (
+                  <div
+                    key={label}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px]",
+                      active ? "bg-muted/70 font-medium text-foreground" : "text-muted-foreground",
+                    )}
                   >
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/12 to-transparent"
-                      animate={reduceMotion ? {} : { x: ["-100%", "120%"] }}
-                      transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-                    />
-                  </motion.div>
-                ) : null}
-                <div className="relative">
-                  {phase === "generating" ? (
-                    <p className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                      <Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-                      Structuring reply
-                      <span className="flex gap-0.5">
-                        {[0, 1, 2].map((d) => (
-                          <motion.span
-                            key={d}
-                            className="inline-block h-1 w-1 rounded-full bg-primary/70"
-                            animate={reduceMotion ? {} : { y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-                            transition={{
-                              repeat: Infinity,
-                              duration: 0.9,
-                              delay: d * 0.12,
-                              ease: "easeInOut",
-                            }}
-                          />
-                        ))}
-                      </span>
+                    <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    {label}
+                  </div>
+                ))}
+              </nav>
+
+              <div className="mt-auto rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[10.5px] text-muted-foreground">
+                <p className="text-foreground">Alex Mercer</p>
+                <p className="truncate">alex@atelier.studio</p>
+              </div>
+            </aside>
+
+            {/* Main column */}
+            <div className="flex flex-col">
+              {/* Daily Brief */}
+              <div className="border-b border-border/60 bg-gradient-to-r from-primary/[0.05] via-transparent to-transparent px-4 py-3">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.75} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                      Morning brief
                     </p>
-                  ) : null}
-                  {phase === "idle" && (
-                    <p className="text-muted-foreground">
-                      Press <strong className="text-foreground">Generate draft</strong> to simulate AI
-                      composing a reply in your tone—then send it through the same provider you’re
-                      viewing.
+                    <p className="mt-0.5 text-[13px] text-foreground">
+                      2 deadlines today, 5 needing reply, 24 promotions to clear. One redline from
+                      legal needs your call.
                     </p>
-                  )}
-                  {(phase === "generating" || phase === "ready") && (
-                    <p className="whitespace-pre-wrap">
-                      {typed}
-                      {phase === "generating" && (
-                        <motion.span
-                          animate={{ opacity: [1, 0.2, 1] }}
-                          transition={{ repeat: Infinity, duration: 0.8 }}
-                          className="inline-block w-2"
-                          aria-hidden
-                        >
-                          |
-                        </motion.span>
-                      )}
-                    </p>
-                  )}
-                  {phase === "sent" && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-2 text-primary"
-                    >
-                      <Mail className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-                      Message queued — same thread, same unified timeline.
-                    </motion.p>
-                  )}
+                  </div>
+                  <button
+                    type="button"
+                    className="hidden shrink-0 rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground sm:inline-flex"
+                  >
+                    Clear promos
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={runDemo}
-                  disabled={phase === "generating"}
-                  className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background shadow-card transition-all duration-500 hover:-translate-y-0.5 disabled:opacity-50"
-                >
-                  {phase === "generating" ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                      Generating…
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-                      Generate draft
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={sendDemo}
-                  disabled={phase !== "ready"}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full border border-border/80 px-5 py-2.5 text-sm font-medium transition-all duration-500",
-                    phase === "ready"
-                      ? "bg-card text-foreground hover:border-primary/40"
-                      : "cursor-not-allowed opacity-40",
-                  )}
-                >
-                  <Send className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-                  Send
-                </button>
+              {/* Bucket tabs */}
+              <div className="flex gap-0.5 overflow-x-auto border-b border-border/60 px-2 py-1.5">
+                {buckets.map((b) => {
+                  const Icon = b.icon;
+                  const active = bucket === b.id;
+                  const c = counts[b.id];
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        setBucket(b.id);
+                        setPhase("idle");
+                        setTyped("");
+                      }}
+                      className={cn(
+                        "relative inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] transition-colors",
+                        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                      aria-pressed={active}
+                    >
+                      <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      <span>{b.label}</span>
+                      {c > 0 ? (
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 py-px text-[10px] tabular-nums",
+                            active
+                              ? "bg-foreground text-background"
+                              : "bg-muted/70 text-muted-foreground",
+                          )}
+                        >
+                          {c}
+                        </span>
+                      ) : null}
+                      {active ? (
+                        <motion.span
+                          layoutId="demo-bucket-pill"
+                          className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-foreground"
+                          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
 
-              <motion.div
-                animate={sendPulse ? { scale: [1, 1.02, 1] } : {}}
-                transition={{ duration: 0.5 }}
-                className="mt-6 flex items-start gap-3 rounded-2xl bg-muted/40 px-4 py-3 text-xs text-muted-foreground"
-              >
-                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-foreground/70" aria-hidden />
-                <p>
-                  In the real app, buckets update from thread intelligence, drafts pull from your
-                  preferences, and provider switches keep the chrome identical—so muscle memory
-                  carries across Google, Microsoft, and more.
-                </p>
-              </motion.div>
+              {/* Three-pane: list + reader */}
+              <div className="grid min-h-[440px] grid-cols-1 lg:grid-cols-[260px_1fr]">
+                {/* Thread list */}
+                <ul className="border-b border-border/60 lg:border-b-0 lg:border-r">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {filtered.map((t) => {
+                      const active = selected?.id === t.id;
+                      return (
+                        <motion.li
+                          key={t.id}
+                          layout
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.32, ease }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedId(t.id);
+                              setPhase("idle");
+                              setTyped("");
+                            }}
+                            className={cn(
+                              "group relative flex w-full items-start gap-2.5 border-b border-border/40 px-3 py-2.5 text-left transition-colors",
+                              active ? "bg-primary/[0.06]" : "hover:bg-muted/30",
+                              t.unread && !active ? "bg-background" : "",
+                            )}
+                          >
+                            {active ? (
+                              <span className="absolute inset-y-2 left-0 w-0.5 rounded-r bg-foreground" />
+                            ) : null}
+                            <span
+                              className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-foreground"
+                              style={{ backgroundColor: `${t.accountColor}1f` }}
+                            >
+                              {t.senderInitials}
+                              {t.unread ? (
+                                <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-background" />
+                              ) : null}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline gap-1.5">
+                                <p
+                                  className={cn(
+                                    "truncate text-[12px] leading-tight",
+                                    t.unread ? "font-semibold text-foreground" : "font-medium text-foreground/85",
+                                  )}
+                                >
+                                  {t.sender}
+                                </p>
+                                <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                                  {t.time}
+                                </span>
+                              </div>
+                              <p
+                                className={cn(
+                                  "mt-0.5 truncate text-[11.5px] leading-tight",
+                                  t.unread ? "text-foreground" : "text-foreground/85",
+                                )}
+                              >
+                                {t.subject}
+                              </p>
+                              <p className="mt-0.5 line-clamp-1 text-[10.5px] text-muted-foreground">
+                                {t.preview}
+                              </p>
+                              {t.chips.length > 0 ? (
+                                <div className="mt-1 flex flex-wrap gap-0.5">
+                                  {t.chips.slice(0, 3).map((c) => (
+                                    <span
+                                      key={c}
+                                      className={cn(
+                                        "rounded-full px-1.5 py-px text-[9.5px] font-medium ring-1",
+                                        chipStyles[c],
+                                      )}
+                                    >
+                                      {c}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          </button>
+                        </motion.li>
+                      );
+                    })}
+                  </AnimatePresence>
+                  {filtered.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-[12px] text-muted-foreground">
+                      Nothing here. Inbox zero for {buckets.find((b) => b.id === bucket)?.label}.
+                    </div>
+                  ) : null}
+                </ul>
+
+                {/* Reader */}
+                <div className="flex min-h-[440px] flex-col">
+                  {/* Subject header */}
+                  <div className="flex items-start justify-between gap-3 border-b border-border/50 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold text-foreground">{selected.subject}</p>
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                        {selected.sender} · {selected.senderEmail} · {selected.time}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1 text-muted-foreground">
+                      <ActionIcon icon={Star} label="Star" />
+                      <ActionIcon icon={Archive} label="Archive" />
+                      <ActionIcon icon={Clock} label="Snooze" />
+                      <ActionIcon icon={Shield} label="Mute" />
+                    </div>
+                  </div>
+
+                  {/* AI insight strip */}
+                  <div className="border-b border-primary/15 bg-primary/[0.04] px-4 py-2.5">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.75} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                            AI insight
+                          </p>
+                          <span className="rounded-full bg-foreground/90 px-1.5 py-px text-[9.5px] font-semibold text-background">
+                            Priority {selected.insight.score}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[12px] text-foreground">{selected.insight.summary}</p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px] text-muted-foreground">
+                          {selected.insight.reasons.map((r) => (
+                            <li key={r}>{r}</li>
+                          ))}
+                        </ul>
+                        {selected.insight.actionItems ? (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {selected.insight.actionItems.map((a) => (
+                              <span
+                                key={a}
+                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary ring-1 ring-primary/20"
+                              >
+                                {a}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Message bubble */}
+                  <div className="space-y-3 px-4 py-3">
+                    <div className="rounded-lg border border-border/60 bg-card/40 p-3 text-[12.5px] leading-relaxed text-foreground">
+                      <div className="mb-1.5 flex items-center justify-between text-[10.5px] text-muted-foreground">
+                        <span className="font-medium text-foreground/80">{selected.sender}</span>
+                        <span>{selected.time} ago</span>
+                      </div>
+                      <p className="whitespace-pre-wrap">{selected.body}</p>
+                    </div>
+
+                    {/* Composer */}
+                    <div className="rounded-lg border border-border bg-background p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          Reply
+                        </p>
+                        <select
+                          value={tone}
+                          onChange={(e) => setTone(e.target.value)}
+                          className="rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] text-foreground focus:outline-none"
+                        >
+                          <option>Professional but warm</option>
+                          <option>Direct</option>
+                          <option>Friendly</option>
+                          <option>Concise</option>
+                        </select>
+                      </div>
+
+                      <div className="relative min-h-[88px] rounded-md border border-border/60 bg-card/40 px-3 py-2 text-[12px] leading-snug text-foreground">
+                        {phase === "drafting" ? (
+                          <motion.div
+                            className="pointer-events-none absolute inset-0 rounded-md"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <motion.div
+                              className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-primary/12 to-transparent"
+                              animate={reduceMotion ? {} : { x: ["-100%", "120%"] }}
+                              transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+                            />
+                          </motion.div>
+                        ) : null}
+                        {phase === "idle" ? (
+                          <p className="text-muted-foreground">
+                            Press <strong className="text-foreground">Draft with AI</strong> to compose
+                            in your tone using calendar context and your past replies.
+                          </p>
+                        ) : phase === "sent" ? (
+                          <p className="flex items-center gap-2 text-primary">
+                            <Send className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            Sent through {selected.accountLabel}.
+                          </p>
+                        ) : (
+                          <p className="relative whitespace-pre-wrap">
+                            {typed}
+                            {phase === "drafting" ? (
+                              <motion.span
+                                animate={{ opacity: [1, 0.2, 1] }}
+                                transition={{ repeat: Infinity, duration: 0.8 }}
+                                className="ml-0.5 inline-block w-1 text-primary"
+                              >
+                                |
+                              </motion.span>
+                            ) : null}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          Tone · {tone}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={generateDraft}
+                            disabled={phase === "drafting"}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-[11px] font-medium text-background transition-opacity disabled:opacity-60"
+                          >
+                            {phase === "drafting" ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-3 w-3" strokeWidth={1.75} />
+                            )}
+                            {phase === "drafting" ? "Drafting…" : "Draft with AI"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={sendDraft}
+                            disabled={phase !== "ready"}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-[11px] font-medium",
+                              phase === "ready" ? "text-foreground" : "cursor-not-allowed opacity-40",
+                            )}
+                          >
+                            <Send className="h-3 w-3" strokeWidth={1.75} />
+                            Send
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
+
+        <p className="mt-6 text-center text-[12px] text-muted-foreground">
+          Same chrome, same shortcuts (⌘K to search, ⌘⇧J for Copilot) you use every day.
+        </p>
       </div>
     </section>
+  );
+}
+
+function ActionIcon({
+  icon: Icon,
+  label,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      className="rounded-md p-1.5 transition-colors hover:bg-muted/60 hover:text-foreground"
+    >
+      <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+    </button>
   );
 }

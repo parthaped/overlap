@@ -2,7 +2,7 @@ import type { DraftSuggestion, EmailMessage, MessageThread, UploadedContextFile 
 import OpenAI from "openai";
 
 import { env } from "@/lib/env";
-import { analyzeThread } from "@/services/thread-analysis";
+import { analyzeThread, deriveSenderFromMessage } from "@/services/thread-analysis";
 
 const openai = env.OPENAI_API_KEY
   ? new OpenAI({
@@ -11,7 +11,11 @@ const openai = env.OPENAI_API_KEY
   : null;
 
 type ThreadWithMessages = Pick<MessageThread, "normalizedSubject" | "aiSummary"> & {
-  messages: Pick<EmailMessage, "subject" | "bodyText" | "snippet" | "direction">[];
+  messages: Array<
+    Pick<EmailMessage, "subject" | "bodyText" | "snippet" | "direction"> & {
+      fromJson?: unknown;
+    }
+  >;
 };
 
 function buildContextSnippets(files: UploadedContextFile[]) {
@@ -40,9 +44,23 @@ async function tryGenerateWithOpenAI(prompt: string) {
 }
 
 export async function generateThreadSummary(thread: ThreadWithMessages) {
+  const enrichedMessages = thread.messages.map((message) => {
+    const sender = deriveSenderFromMessage(
+      "fromJson" in message ? { fromJson: message.fromJson } : undefined,
+    );
+    return {
+      subject: message.subject,
+      bodyText: message.bodyText,
+      snippet: message.snippet,
+      direction: message.direction,
+      fromEmail: sender.email,
+      fromName: sender.name,
+    };
+  });
+
   const heuristic = analyzeThread(
     { normalizedSubject: thread.normalizedSubject } as MessageThread,
-    thread.messages,
+    enrichedMessages,
   );
 
   const prompt = [
