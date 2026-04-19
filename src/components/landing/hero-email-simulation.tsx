@@ -224,7 +224,7 @@ export function HeroEmailSimulation() {
 
           {/* Main */}
           <div className="flex flex-col">
-            {/* Top bar with search + copilot */}
+            {/* Top bar with search + Overlap AI */}
             <div className="flex items-center justify-between gap-2 border-b border-border/50 px-3 py-2">
               <div className="flex flex-1 items-center gap-1.5 rounded-md bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground">
                 <Search className="h-3 w-3" strokeWidth={1.5} />
@@ -236,7 +236,7 @@ export function HeroEmailSimulation() {
                 className="inline-flex items-center gap-1 rounded-md bg-foreground px-2 py-1 text-[11px] font-medium text-background"
               >
                 <Sparkles className="h-3 w-3" strokeWidth={1.75} />
-                Copilot
+                Overlap AI
               </button>
             </div>
 

@@ -21,25 +21,25 @@ import {
 
 const openai = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 
-export type CopilotToolCall = {
+export type InboxAiToolCall = {
   name: string;
   args: Record<string, unknown>;
   result: unknown;
 };
 
-export type CopilotMessageOut = {
+export type InboxAiMessageOut = {
   id: string;
   role: "user" | "assistant" | "tool";
   content: string;
-  toolCalls?: CopilotToolCall[];
+  toolCalls?: InboxAiToolCall[];
   createdAt: string;
 };
 
-export type CopilotResponse = {
+export type InboxAiResponse = {
   ok: boolean;
   conversationId: string;
   reply: string;
-  toolCalls: CopilotToolCall[];
+  toolCalls: InboxAiToolCall[];
   error?: string;
 };
 
@@ -276,9 +276,9 @@ async function searchThreads(userId: string, query: string) {
 async function deterministicReply(
   question: string,
   userId: string,
-): Promise<{ reply: string; toolCalls: CopilotToolCall[] }> {
+): Promise<{ reply: string; toolCalls: InboxAiToolCall[] }> {
   const lower = question.toLowerCase();
-  const toolCalls: CopilotToolCall[] = [];
+  const toolCalls: InboxAiToolCall[] = [];
 
   if (/import|priorit|today|brief|catch up/.test(lower)) {
     const result = await dailyBrief();
@@ -337,12 +337,12 @@ async function deterministicReply(
 }
 
 // ============================================================================
-// copilotAsk — entry point
+// askInboxAi — entry point
 // ============================================================================
 
-export async function copilotAsk(
+export async function askInboxAi(
   input: z.infer<typeof askSchema>,
-): Promise<CopilotResponse> {
+): Promise<InboxAiResponse> {
   const session = await getCurrentSession();
   if (!session?.user?.id) {
     return {
@@ -380,7 +380,7 @@ export async function copilotAsk(
   });
 
   let reply: string;
-  let toolCalls: CopilotToolCall[];
+  let toolCalls: InboxAiToolCall[];
 
   if (!openai) {
     const det = await deterministicReply(parsed.data.question, userId);
@@ -390,7 +390,7 @@ export async function copilotAsk(
     try {
       ({ reply, toolCalls } = await runWithOpenAI(parsed.data.question, userId, parsed.data.threadId));
     } catch (error) {
-      console.error("Copilot OpenAI run failed; falling back.", error);
+      console.error("Overlap AI (OpenAI) run failed; falling back.", error);
       const det = await deterministicReply(parsed.data.question, userId);
       reply = det.reply;
       toolCalls = det.toolCalls;
@@ -415,7 +415,7 @@ async function runWithOpenAI(
   question: string,
   userId: string,
   contextThreadId?: string,
-): Promise<{ reply: string; toolCalls: CopilotToolCall[] }> {
+): Promise<{ reply: string; toolCalls: InboxAiToolCall[] }> {
   if (!openai) throw new Error("OpenAI not configured");
 
   const recent = await prisma.messageThread.findMany({
@@ -430,7 +430,7 @@ async function runWithOpenAI(
     },
   });
 
-  const systemPrompt = `You are Overlap, an in-product AI copilot for the user's unified inbox.
+  const systemPrompt = `You are Overlap, the in-product AI assistant for the user's unified inbox.
 You can call tools to read, summarize, draft replies, triage, snooze, mute, and VIP.
 Always be terse — one to three short sentences plus a list when listing items.
 When the user asks about importance/priority, call list_top_priorities first.
@@ -446,7 +446,7 @@ ${contextThreadId ? `\nUser is currently viewing thread id=${contextThreadId}.` 
     { role: "user", content: question },
   ];
 
-  const collectedToolCalls: CopilotToolCall[] = [];
+  const collectedToolCalls: InboxAiToolCall[] = [];
 
   for (let step = 0; step < 4; step += 1) {
     const completion = await openai.chat.completions.create({
@@ -491,12 +491,12 @@ ${contextThreadId ? `\nUser is currently viewing thread id=${contextThreadId}.` 
 }
 
 // ============================================================================
-// loadCopilotConversation — for hydrating the drawer
+// loadInboxAiConversation — for hydrating the drawer
 // ============================================================================
 
-export async function loadCopilotConversation(
+export async function loadInboxAiConversation(
   conversationId: string,
-): Promise<CopilotMessageOut[]> {
+): Promise<InboxAiMessageOut[]> {
   const session = await getCurrentSession();
   if (!session?.user?.id) return [];
 
@@ -509,7 +509,7 @@ export async function loadCopilotConversation(
     id: m.id,
     role: m.role as "user" | "assistant" | "tool",
     content: m.content,
-    toolCalls: (m.toolCallsJson as CopilotToolCall[] | null) ?? undefined,
+    toolCalls: (m.toolCallsJson as InboxAiToolCall[] | null) ?? undefined,
     createdAt: m.createdAt.toISOString(),
   }));
 }

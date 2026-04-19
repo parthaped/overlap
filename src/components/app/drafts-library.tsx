@@ -85,7 +85,7 @@ export function DraftsLibrary({ drafts }: { drafts: DraftLibraryItem[] }) {
           </span>
           <p className="max-w-sm text-sm text-muted-foreground">
             {filter === "all"
-              ? "No drafts yet. Generate one from any thread or via the AI copilot."
+              ? "No drafts yet. Generate one from any thread or from Overlap AI."
               : `No drafts in ${filter.toLowerCase()}.`}
           </p>
         </div>

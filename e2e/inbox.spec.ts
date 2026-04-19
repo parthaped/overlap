@@ -37,14 +37,14 @@ test.describe("inbox smoke", () => {
     await expect(focus).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("opens the AI Copilot drawer", async ({ page }) => {
-    // The shell exposes a copilot toggle (Cmd+Shift+J also works).
+  test("opens the Overlap AI drawer", async ({ page }) => {
+    // The shell exposes an Overlap AI toggle (Cmd+Shift+J also works).
     await page.keyboard.press(process.platform === "darwin" ? "Meta+Shift+J" : "Control+Shift+J");
-    const copilot = page.getByRole("complementary", { name: /ai copilot/i });
-    await expect(copilot).toBeVisible();
-    await expect(copilot.getByPlaceholder(/ask overlap/i)).toBeVisible();
+    const panel = page.getByRole("complementary", { name: /overlap ai/i });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByPlaceholder(/ask overlap/i)).toBeVisible();
     // Suggestion chips should be rendered for empty state.
-    await expect(copilot.getByText(/what's important today/i)).toBeVisible();
+    await expect(panel.getByText(/what's important today/i)).toBeVisible();
   });
 
   test("opens the command palette with Cmd/Ctrl+K", async ({ page }) => {

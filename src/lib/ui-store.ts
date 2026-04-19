@@ -19,20 +19,20 @@ type UIState = {
   selectedThreadId: string | null;
   currentBucket: BucketId;
   selectedAccountId: string;
-  copilotOpen: boolean;
+  overlapAiOpen: boolean;
   commandPaletteOpen: boolean;
   shortcutsOpen: boolean;
-  copilotConversationId: string | null;
+  overlapAiConversationId: string | null;
 
   setSelectedThread: (id: string | null) => void;
   setBucket: (bucket: BucketId) => void;
   setAccount: (id: string) => void;
-  toggleCopilot: () => void;
-  setCopilotOpen: (v: boolean) => void;
+  toggleOverlapAi: () => void;
+  setOverlapAiOpen: (v: boolean) => void;
   setCommandPaletteOpen: (v: boolean) => void;
   toggleCommandPalette: () => void;
   setShortcutsOpen: (v: boolean) => void;
-  setCopilotConversationId: (id: string | null) => void;
+  setOverlapAiConversationId: (id: string | null) => void;
 };
 
 export const useUIStore = create<UIState>()(
@@ -41,28 +41,28 @@ export const useUIStore = create<UIState>()(
       selectedThreadId: null,
       currentBucket: "FOCUS",
       selectedAccountId: "all",
-      copilotOpen: false,
+      overlapAiOpen: false,
       commandPaletteOpen: false,
       shortcutsOpen: false,
-      copilotConversationId: null,
+      overlapAiConversationId: null,
       setSelectedThread: (id) => set({ selectedThreadId: id }),
       setBucket: (bucket) => set({ currentBucket: bucket }),
       setAccount: (id) => set({ selectedAccountId: id }),
-      toggleCopilot: () => set((s) => ({ copilotOpen: !s.copilotOpen })),
-      setCopilotOpen: (v) => set({ copilotOpen: v }),
+      toggleOverlapAi: () => set((s) => ({ overlapAiOpen: !s.overlapAiOpen })),
+      setOverlapAiOpen: (v) => set({ overlapAiOpen: v }),
       setCommandPaletteOpen: (v) => set({ commandPaletteOpen: v }),
       toggleCommandPalette: () =>
         set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
       setShortcutsOpen: (v) => set({ shortcutsOpen: v }),
-      setCopilotConversationId: (id) => set({ copilotConversationId: id }),
+      setOverlapAiConversationId: (id) => set({ overlapAiConversationId: id }),
     }),
     {
-      name: "overlap-ui-state",
+      name: "overlap-ui-state-v2",
       partialize: (s) => ({
         currentBucket: s.currentBucket,
         selectedAccountId: s.selectedAccountId,
-        copilotOpen: s.copilotOpen,
-        copilotConversationId: s.copilotConversationId,
+        overlapAiOpen: s.overlapAiOpen,
+        overlapAiConversationId: s.overlapAiConversationId,
       }),
     },
   ),

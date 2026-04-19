@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { copilotAsk, type CopilotToolCall } from "@/actions/copilot";
+import { askInboxAi, type InboxAiToolCall } from "@/actions/inbox-ai";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/ui-store";
 
@@ -19,7 +19,7 @@ type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  toolCalls?: CopilotToolCall[];
+  toolCalls?: InboxAiToolCall[];
 };
 
 const SUGGESTIONS = [
@@ -30,11 +30,11 @@ const SUGGESTIONS = [
   "Summarize the thread I'm reading",
 ];
 
-export function AICopilot() {
-  const open = useUIStore((s) => s.copilotOpen);
-  const setOpen = useUIStore((s) => s.setCopilotOpen);
-  const conversationId = useUIStore((s) => s.copilotConversationId);
-  const setConversationId = useUIStore((s) => s.setCopilotConversationId);
+export function OverlapAiPanel() {
+  const open = useUIStore((s) => s.overlapAiOpen);
+  const setOpen = useUIStore((s) => s.setOverlapAiOpen);
+  const conversationId = useUIStore((s) => s.overlapAiConversationId);
+  const setConversationId = useUIStore((s) => s.setOverlapAiConversationId);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -56,7 +56,7 @@ export function AICopilot() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     startTransition(async () => {
-      const r = await copilotAsk({
+      const r = await askInboxAi({
         question: trimmed,
         conversationId: conversationId ?? undefined,
       });
@@ -101,7 +101,7 @@ export function AICopilot() {
             exit={{ x: 380, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
             className="fixed right-0 top-0 z-50 flex h-screen w-[min(420px,92vw)] flex-col border-l border-border bg-background shadow-2xl lg:shadow-none"
-            aria-label="AI Copilot"
+            aria-label="Overlap AI"
           >
             <header className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3">
               <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export function AICopilot() {
                   <Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Overlap Copilot</p>
+                  <p className="text-sm font-semibold text-foreground">Overlap AI</p>
                   <p className="text-[11px] text-muted-foreground">
                     Asks, summarizes, drafts, triages.
                   </p>
@@ -119,7 +119,7 @@ export function AICopilot() {
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                aria-label="Close copilot"
+                aria-label="Close Overlap AI"
               >
                 <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
@@ -191,7 +191,7 @@ export function AICopilot() {
                 </button>
               </form>
               <p className="mt-1.5 text-[10px] text-muted-foreground">
-                ⌘⇧J toggles · Esc closes
+                ⌘⇧J toggles Overlap AI · Esc closes
               </p>
             </footer>
           </motion.aside>
@@ -232,7 +232,7 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-function ToolCallTrace({ call }: { call: CopilotToolCall }) {
+function ToolCallTrace({ call }: { call: InboxAiToolCall }) {
   const [open, setOpen] = useState(false);
   const summary = summarizeToolCall(call);
   return (
@@ -261,7 +261,7 @@ function ToolCallTrace({ call }: { call: CopilotToolCall }) {
   );
 }
 
-function summarizeToolCall(call: CopilotToolCall): string {
+function summarizeToolCall(call: InboxAiToolCall): string {
   const result = call.result as { ok?: boolean; data?: unknown; error?: string } | undefined;
   if (!result) return "";
   if (result.ok === false) return `error: ${result.error ?? "unknown"}`;

@@ -21,7 +21,7 @@ export function ThreadList({ threads, selectedId, onSelect, emptyMessage }: Thre
           <Inbox className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
         </span>
         <p className="max-w-xs text-sm text-muted-foreground">
-          {emptyMessage ?? "Nothing here. Try another bucket or ask the copilot."}
+          {emptyMessage ?? "Nothing here. Try another bucket or ask Overlap AI."}
         </p>
       </div>
     );

@@ -20,7 +20,7 @@ import { useUIStore } from "@/lib/ui-store";
 
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/app/command-palette";
-import { AICopilot } from "@/components/app/inbox/ai-copilot";
+import { OverlapAiPanel } from "@/components/app/inbox/overlap-ai-panel";
 import { ShortcutsModal } from "@/components/app/keyboard-shortcuts";
 
 export type AppShellUser = {
@@ -44,13 +44,13 @@ const navItems = [
 export function AppShell({ user, children, rightRail }: AppShellProps) {
   const pathname = usePathname();
   const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const toggleCopilot = useUIStore((s) => s.toggleCopilot);
+  const toggleOverlapAi = useUIStore((s) => s.toggleOverlapAi);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <CommandPalette />
       <ShortcutsModal />
-      <AICopilot />
+      <OverlapAiPanel />
 
       <div className="flex min-h-screen w-full">
         {/* Desktop left rail */}
@@ -78,11 +78,11 @@ export function AppShell({ user, children, rightRail }: AppShellProps) {
 
           <button
             type="button"
-            onClick={toggleCopilot}
+            onClick={toggleOverlapAi}
             className="mt-2 flex items-center gap-2 rounded-lg bg-foreground/95 px-2.5 py-1.5 text-sm text-background shadow-sm transition-all hover:-translate-y-px hover:shadow-card"
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.5} />
-            <span className="flex-1 text-left">Open AI copilot</span>
+            <span className="flex-1 text-left">Open Overlap AI</span>
             <kbd className="rounded bg-background/15 px-1 py-0.5 text-[10px] font-mono">
               ⌘⇧J
             </kbd>
@@ -149,7 +149,7 @@ export function AppShell({ user, children, rightRail }: AppShellProps) {
               <Button variant="ghost" size="sm" onClick={() => setCommandPaletteOpen(true)} className="h-8 px-2.5 text-xs">
                 ⌘K
               </Button>
-              <Button variant="ghost" size="sm" onClick={toggleCopilot} className="h-8 gap-1.5 px-2.5 text-xs">
+              <Button variant="ghost" size="sm" onClick={toggleOverlapAi} className="h-8 gap-1.5 px-2.5 text-xs">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} />
                 AI
               </Button>

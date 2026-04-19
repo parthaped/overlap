@@ -20,7 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { bulkTriage } from "@/actions/ai";
-import { copilotAsk } from "@/actions/copilot";
+import { askInboxAi } from "@/actions/inbox-ai";
 import { cn } from "@/lib/utils";
 import { useUIStore, type BucketId } from "@/lib/ui-store";
 
@@ -42,7 +42,7 @@ export function CommandPalette() {
   const open = useUIStore((s) => s.commandPaletteOpen);
   const setOpen = useUIStore((s) => s.setCommandPaletteOpen);
   const setBucket = useUIStore((s) => s.setBucket);
-  const setCopilotOpen = useUIStore((s) => s.setCopilotOpen);
+  const setOverlapAiOpen = useUIStore((s) => s.setOverlapAiOpen);
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -65,11 +65,11 @@ export function CommandPalette() {
     };
     const askAI = (q: string) => async () => {
       setOpen(false);
-      setCopilotOpen(true);
-      toast.promise(copilotAsk({ question: q }), {
+      setOverlapAiOpen(true);
+      toast.promise(askInboxAi({ question: q }), {
         loading: "Thinking…",
         success: "Done.",
-        error: "Copilot failed.",
+        error: "Overlap AI failed.",
       });
     };
 
@@ -107,7 +107,7 @@ export function CommandPalette() {
       },
       {
         id: "ai",
-        label: "AI Copilot",
+        label: "Overlap AI",
         items: [
           {
             id: "ai-brief",
@@ -170,7 +170,7 @@ export function CommandPalette() {
         ],
       },
     ];
-  }, [router, setBucket, setCopilotOpen, setOpen]);
+  }, [router, setBucket, setOverlapAiOpen, setOpen]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -203,14 +203,14 @@ export function CommandPalette() {
       if (item) {
         void item.run();
       } else if (query.trim().length > 0) {
-        // Treat as a copilot question.
+        // Treat as an Overlap AI question.
         const q = query.trim();
         setOpen(false);
-        setCopilotOpen(true);
-        toast.promise(copilotAsk({ question: q }), {
+        setOverlapAiOpen(true);
+        toast.promise(askInboxAi({ question: q }), {
           loading: "Asking Overlap…",
           success: "Done.",
-          error: "Copilot failed.",
+          error: "Overlap AI failed.",
         });
       }
     }
@@ -257,11 +257,11 @@ export function CommandPalette() {
                     const q = query.trim();
                     if (!q) return;
                     setOpen(false);
-                    setCopilotOpen(true);
-                    toast.promise(copilotAsk({ question: q }), {
+                    setOverlapAiOpen(true);
+                    toast.promise(askInboxAi({ question: q }), {
                       loading: "Asking Overlap…",
                       success: "Done.",
-                      error: "Copilot failed.",
+                      error: "Overlap AI failed.",
                     });
                   }}
                   className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted/40"

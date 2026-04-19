@@ -28,14 +28,14 @@ export type Shortcuts = {
 
 /**
  * Global keyboard navigation. Pages can supply handlers for movement / actions;
- * the global shortcuts (?, Cmd-K, copilot) live here regardless.
+ * the global shortcuts (?, Cmd-K, Overlap AI) live here regardless.
  */
 export function useGlobalShortcuts(handlers: Shortcuts = {}) {
   const toggleCommandPalette = useUIStore((s) => s.toggleCommandPalette);
-  const toggleCopilot = useUIStore((s) => s.toggleCopilot);
+  const toggleOverlapAi = useUIStore((s) => s.toggleOverlapAi);
   const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
   const setCommandPaletteOpen = useUIStore((s) => s.setCommandPaletteOpen);
-  const setCopilotOpen = useUIStore((s) => s.setCopilotOpen);
+  const setOverlapAiOpen = useUIStore((s) => s.setOverlapAiOpen);
 
   useEffect(() => {
     let pendingG = false;
@@ -66,7 +66,7 @@ export function useGlobalShortcuts(handlers: Shortcuts = {}) {
       }
       if (meta && event.key.toLowerCase() === "j" && event.shiftKey) {
         event.preventDefault();
-        toggleCopilot();
+        toggleOverlapAi();
         return;
       }
       if (event.key === "Escape") {
@@ -89,7 +89,7 @@ export function useGlobalShortcuts(handlers: Shortcuts = {}) {
       }
       if (event.key.toLowerCase() === "c" && !meta) {
         event.preventDefault();
-        setCopilotOpen(true);
+        setOverlapAiOpen(true);
         return;
       }
 
@@ -150,16 +150,16 @@ export function useGlobalShortcuts(handlers: Shortcuts = {}) {
   }, [
     handlers,
     setCommandPaletteOpen,
-    setCopilotOpen,
+    setOverlapAiOpen,
     setShortcutsOpen,
     toggleCommandPalette,
-    toggleCopilot,
+    toggleOverlapAi,
   ]);
 }
 
 const SHORTCUTS = [
   { keys: ["⌘", "K"], label: "Open command palette" },
-  { keys: ["⌘", "⇧", "J"], label: "Toggle AI copilot" },
+  { keys: ["⌘", "⇧", "J"], label: "Toggle Overlap AI" },
   { keys: ["?"], label: "Show this help" },
   { keys: ["j"], label: "Next thread" },
   { keys: ["k"], label: "Previous thread" },
@@ -168,7 +168,7 @@ const SHORTCUTS = [
   { keys: ["r"], label: "Generate AI reply" },
   { keys: ["s"], label: "Snooze 4h" },
   { keys: ["v"], label: "Mark sender VIP" },
-  { keys: ["c"], label: "Open copilot" },
+  { keys: ["c"], label: "Open Overlap AI" },
   { keys: ["g", "f"], label: "Jump to Focus" },
   { keys: ["g", "r"], label: "Jump to Needs reply" },
   { keys: ["g", "w"], label: "Jump to Waiting on" },

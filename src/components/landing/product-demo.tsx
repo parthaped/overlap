@@ -425,7 +425,7 @@ export function ProductDemo() {
                   className="flex w-full items-center gap-2 rounded-md bg-foreground/95 px-2 py-1.5 text-[11px] font-medium text-background"
                 >
                   <Sparkles className="h-3 w-3" strokeWidth={1.75} />
-                  Ask Copilot
+                  Overlap AI
                 </button>
               </div>
 
@@ -782,7 +782,7 @@ export function ProductDemo() {
         </motion.div>
 
         <p className="mt-6 text-center text-[12px] text-muted-foreground">
-          Same chrome, same shortcuts (⌘K to search, ⌘⇧J for Copilot) you use every day.
+          Same chrome, same shortcuts (⌘K to search, ⌘⇧J for Overlap AI) you use every day.
         </p>
       </div>
     </section>

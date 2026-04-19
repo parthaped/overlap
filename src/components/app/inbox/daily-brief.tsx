@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { bulkTriage } from "@/actions/ai";
-import { copilotAsk } from "@/actions/copilot";
+import { askInboxAi } from "@/actions/inbox-ai";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/ui-store";
 
@@ -21,7 +21,7 @@ type DailyBriefProps = {
 
 export function DailyBriefBanner({ brief, counts, userName, onSelectThread }: DailyBriefProps) {
   const reduceMotion = useReducedMotion();
-  const setCopilotOpen = useUIStore((s) => s.setCopilotOpen);
+  const setOverlapAiOpen = useUIStore((s) => s.setOverlapAiOpen);
   const setBucket = useUIStore((s) => s.setBucket);
   const [pending, startTransition] = useTransition();
 
@@ -47,11 +47,11 @@ export function DailyBriefBanner({ brief, counts, userName, onSelectThread }: Da
   }
 
   function askForBrief() {
-    setCopilotOpen(true);
-    toast.promise(copilotAsk({ question: "Give me a 60-second morning brief." }), {
+    setOverlapAiOpen(true);
+    toast.promise(askInboxAi({ question: "Give me a 60-second morning brief." }), {
       loading: "Drafting brief…",
-      success: "Brief ready in copilot.",
-      error: "Couldn't reach the copilot.",
+      success: "Brief ready in Overlap AI.",
+      error: "Couldn't reach Overlap AI.",
     });
   }
 
