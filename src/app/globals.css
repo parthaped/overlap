@@ -119,6 +119,30 @@ body {
   background: transparent;
 }
 
+/* Hero inbox simulation — smooth float (compositor-only, not tied to React render) */
+@keyframes hero-inbox-sim-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+
+.hero-inbox-sim-float {
+  animation: hero-inbox-sim-float 12s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-inbox-sim-float {
+    animation: none;
+    will-change: auto;
+  }
+}
+
 .shadow-soft {
   box-shadow: var(--shadow-soft);
 }

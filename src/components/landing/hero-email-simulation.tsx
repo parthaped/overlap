@@ -188,10 +188,11 @@ export function HeroEmailSimulation() {
     >
       <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[2.25rem] bg-[radial-gradient(ellipse_at_30%_20%,rgba(91,187,189,0.18),transparent_55%),radial-gradient(ellipse_at_70%_80%,rgba(246,141,79,0.10),transparent_50%)] blur-2xl" />
 
-      <motion.div
-        animate={reduceMotion ? {} : { y: [0, -4, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-        className="relative overflow-hidden rounded-2xl border border-border bg-background shadow-xl ring-1 ring-border/40"
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-border bg-background shadow-xl ring-1 ring-border/40",
+          !reduceMotion && "hero-inbox-sim-float",
+        )}
       >
         {/* Window chrome */}
         <div className="flex items-center gap-1.5 border-b border-border/60 bg-muted/30 px-3 py-2">
@@ -274,10 +275,7 @@ export function HeroEmailSimulation() {
                       </span>
                     ) : null}
                     {active ? (
-                      <motion.span
-                        layoutId="hero-bucket-pill"
-                        className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-foreground"
-                      />
+                      <span className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-foreground" />
                     ) : null}
                   </button>
                 );
@@ -433,7 +431,7 @@ export function HeroEmailSimulation() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       <p className="mt-3 flex items-center justify-center gap-1 text-[11px] text-muted-foreground lg:justify-start">
         Your inbox, day one
