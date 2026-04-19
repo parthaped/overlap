@@ -41,6 +41,8 @@ const DEMO_TONE_OPTIONS = [
   "Concise",
 ] as const;
 
+type DemoTone = (typeof DEMO_TONE_OPTIONS)[number];
+
 type BucketId =
   | "FOCUS"
   | "NEEDS_REPLY"
@@ -78,7 +80,8 @@ type PreviewThread = {
   starred?: boolean;
   chips: Chip[];
   insight: { summary: string; reasons: string[]; actionItems?: string[]; score: number };
-  defaultDraft?: string;
+  /** Hard-coded preview copy per tone (no API). */
+  previewDrafts: Record<DemoTone, string>;
 };
 
 const buckets: {
@@ -130,8 +133,16 @@ const allThreads: PreviewThread[] = [
       actionItems: ["Reply with confirmation", "Lock board narrative"],
       score: 94,
     },
-    defaultDraft:
-      "Hi Sarah — confirmed. The headline reads cleanly and matches last week's deck. I tightened the KPI line so it mirrors the appendix without repeating the chart. Sending the locked version now.",
+    previewDrafts: {
+      "Professional but warm":
+        "Hi Sarah — confirmed. The headline reads cleanly and matches last week's deck. I tightened the KPI line so it mirrors the appendix without repeating the chart. Sending the locked version now.",
+      Direct:
+        "Sarah — confirmed. Headline is good; KPI line now matches the appendix without repeating the chart. Sending final.",
+      Friendly:
+        "Hey Sarah — all good on my end! The headline feels aligned with last week's deck, and I tweaked the KPI sentence so it echoes the appendix without duplicating it. Sending the locked version your way.",
+      Concise:
+        "Confirmed. Headline OK; KPI adjusted to mirror appendix. Sending now.",
+    },
   },
   {
     id: "t-focus-2",
@@ -153,8 +164,15 @@ const allThreads: PreviewThread[] = [
       actionItems: ["Review two redlines", "Confirm or counter"],
       score: 88,
     },
-    defaultDraft:
-      "Morgan — reviewed both. Edit 1 looks good as drafted. On Edit 2, can we keep the original cap language? Otherwise, ship it.",
+    previewDrafts: {
+      "Professional but warm":
+        "Morgan — reviewed both redlines. Edit 1 looks good as drafted. On Edit 2, I'd prefer we keep the original cap language unless counsel needs the change — happy to finalize once you confirm.",
+      Direct:
+        "Edit 1: approved. Edit 2: keep original cap unless legal requires otherwise. Send when ready.",
+      Friendly:
+        "Thanks for sending these over, Morgan. Edit 1 is a yes from me. On Edit 2 I'm leaning toward keeping the original cap wording unless your team sees a real issue — just say the word and I'll wrap the reply.",
+      Concise: "Edit 1 OK. Edit 2: retain original cap. OK to proceed?",
+    },
   },
   {
     id: "t-needs-1",
@@ -177,8 +195,15 @@ const allThreads: PreviewThread[] = [
       actionItems: ["Reply with availability"],
       score: 78,
     },
-    defaultDraft:
-      "Hi John — happy to lock it in. Tuesday 2–4pm or Wednesday 10–12 both work on my side. Send the invite for whichever fits best and I'll add the working doc.",
+    previewDrafts: {
+      "Professional but warm":
+        "Hi John — thank you. Tuesday 2–4pm or Wednesday 10–12 both work on my side. Please send the calendar invite for whichever you prefer, and I'll attach the working doc.",
+      Direct:
+        "Tue 2–4pm or Wed 10–12 work. Send the invite — I'll add the working doc.",
+      Friendly:
+        "Hi John — either Tuesday afternoon (2–4) or Wednesday morning (10–12) works great for me. Pick whichever is easier and send the invite; I'll drop the working doc in the thread.",
+      Concise: "Tue 2–4 / Wed 10–12 open. Send invite; I'll add doc.",
+    },
   },
   {
     id: "t-needs-2",
@@ -199,8 +224,15 @@ const allThreads: PreviewThread[] = [
       actionItems: ["Acknowledge or amend"],
       score: 64,
     },
-    defaultDraft:
-      "Priya — looks right. Marcus is the right primary; agree on pruning procurement until phase two.",
+    previewDrafts: {
+      "Professional but warm":
+        "Priya — thanks for the update. The stakeholder map looks correct to me: Marcus as primary and deferring the procurement cluster until phase two aligns with how we're running the program.",
+      Direct:
+        "Confirmed. Marcus stays primary; procurement cluster waits until phase two.",
+      Friendly:
+        "Hey Priya — this looks spot on to me. Marcus feels like the right anchor, and pushing procurement to phase two matches what we discussed. Appreciate you tightening it up.",
+      Concise: "Looks good. Marcus primary; procurement in phase two.",
+    },
   },
   {
     id: "t-waiting-1",
@@ -221,6 +253,15 @@ const allThreads: PreviewThread[] = [
       actionItems: ["Wait or send reminder"],
       score: 42,
     },
+    previewDrafts: {
+      "Professional but warm":
+        "Hi — following up on the SOW we sent April 8. When you have a moment, could you share where things stand or your expected timeline? Happy to jump on a quick call if that helps move it forward.",
+      Direct:
+        "Reminder: SOW sent April 8. Need status or ETA on your review.",
+      Friendly:
+        "Quick bump on the April 8 SOW — totally understand things get busy. When you can, could you let me know where it sits or if you need anything from our side?",
+      Concise: "Following up on Apr 8 SOW. Status or ETA?",
+    },
   },
   {
     id: "t-update-1",
@@ -239,6 +280,13 @@ const allThreads: PreviewThread[] = [
       summary: "GitHub notification. No reply needed.",
       reasons: ["Automated update", "Sender domain: github.com"],
       score: 18,
+    },
+    previewDrafts: {
+      "Professional but warm":
+        "Thanks for the notification — I'll review PR #284 when I'm back at my desk and follow up if I have questions.",
+      Direct: "Noted. Will review PR #284.",
+      Friendly: "Got it, thanks for the ping — I'll take a look at PR #284 shortly.",
+      Concise: "Seen. Reviewing #284.",
     },
   },
   {
@@ -259,6 +307,14 @@ const allThreads: PreviewThread[] = [
       reasons: ["Mailchimp domain", "Subject keyword: % off"],
       score: 8,
     },
+    previewDrafts: {
+      "Professional but warm":
+        "Thank you for reaching out. We're not evaluating purchases in this category right now — please remove me from promotional mailings.",
+      Direct: "Not interested. Remove me from promo emails.",
+      Friendly:
+        "Thanks for thinking of us — I'm going to pass for now. Could you take me off promotional sends? Appreciate it.",
+      Concise: "No thanks — unsubscribe from promos.",
+    },
   },
   {
     id: "t-social-1",
@@ -278,6 +334,14 @@ const allThreads: PreviewThread[] = [
       reasons: ["Sender: linkedin.com", "Social network notification"],
       score: 12,
     },
+    previewDrafts: {
+      "Professional but warm":
+        "Hi Daniel — thank you for the invitation. Happy to connect and stay in touch here.",
+      Direct: "Accepting — good to connect.",
+      Friendly:
+        "Hi Daniel — great to connect! Looking forward to seeing what you're working on.",
+      Concise: "Connected. Talk soon.",
+    },
   },
   {
     id: "t-newsletter-1",
@@ -296,6 +360,14 @@ const allThreads: PreviewThread[] = [
       summary: "Newsletter. Read when you have time.",
       reasons: ["Subscription cadence: weekly", "No action required"],
       score: 22,
+    },
+    previewDrafts: {
+      "Professional but warm":
+        "Thanks — I've filed this for reading later. No action needed from my side on this edition.",
+      Direct: "Received. Will read later; no reply needed.",
+      Friendly:
+        "Thanks as always — saving this for a quieter block this week. Really appreciate the writing.",
+      Concise: "Saved for later. No reply needed.",
     },
   },
 ];
@@ -318,7 +390,7 @@ export function ProductDemo() {
   const [selectedId, setSelectedId] = useState<string>(allThreads[0]!.id);
   const [phase, setPhase] = useState<"idle" | "drafting" | "ready" | "sent">("idle");
   const [typed, setTyped] = useState("");
-  const [tone, setTone] = useState("Professional but warm");
+  const [tone, setTone] = useState<DemoTone>("Professional but warm");
 
   const filtered = useMemo(() => allThreads.filter((t) => t.bucket === bucket), [bucket]);
   const selected = useMemo(
@@ -337,17 +409,16 @@ export function ProductDemo() {
     }
   }, [filtered, selectedId]);
 
+  function onToneChange(next: DemoTone) {
+    setTone(next);
+    setTyped("");
+    setPhase("idle");
+  }
+
   const generateDraft = () => {
-    if (!selected.defaultDraft) {
-      setPhase("ready");
-      setTyped(
-        "Thanks — I have everything I need to act on this. I'll follow up shortly with the next step.",
-      );
-      return;
-    }
+    const target = selected.previewDrafts[tone];
     setPhase("drafting");
     setTyped("");
-    const target = selected.defaultDraft;
     let i = 0;
     const id = window.setInterval(() => {
       i += 1;
@@ -703,7 +774,7 @@ export function ProductDemo() {
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Reply
                         </p>
-                        <Select value={tone} onValueChange={setTone}>
+                        <Select value={tone} onValueChange={(v) => onToneChange(v as DemoTone)}>
                           <SelectTrigger
                             aria-label="Reply tone"
                             className="h-7 min-w-[8.5rem] max-w-[12rem] rounded-lg border-border/60 px-2 text-[10px] font-medium shadow-none ring-1 ring-border/25 data-[state=open]:ring-primary/25"
