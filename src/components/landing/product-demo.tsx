@@ -23,9 +23,23 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const ease = [0.22, 1, 0.36, 1] as const;
+
+const DEMO_TONE_OPTIONS = [
+  "Professional but warm",
+  "Direct",
+  "Friendly",
+  "Concise",
+] as const;
 
 type BucketId =
   | "FOCUS"
@@ -689,16 +703,21 @@ export function ProductDemo() {
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Reply
                         </p>
-                        <select
-                          value={tone}
-                          onChange={(e) => setTone(e.target.value)}
-                          className="rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] text-foreground focus:outline-none"
-                        >
-                          <option>Professional but warm</option>
-                          <option>Direct</option>
-                          <option>Friendly</option>
-                          <option>Concise</option>
-                        </select>
+                        <Select value={tone} onValueChange={setTone}>
+                          <SelectTrigger
+                            aria-label="Reply tone"
+                            className="h-7 min-w-[8.5rem] max-w-[12rem] rounded-lg border-border/60 px-2 text-[10px] font-medium shadow-none ring-1 ring-border/25 data-[state=open]:ring-primary/25"
+                          >
+                            <SelectValue placeholder="Tone" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEMO_TONE_OPTIONS.map((t) => (
+                              <SelectItem key={t} value={t} className="text-[11px]">
+                                {t}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="relative min-h-[88px] rounded-md border border-border/60 bg-card/40 px-3 py-2 text-[12px] leading-snug text-foreground">

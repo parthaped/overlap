@@ -28,9 +28,23 @@ import {
   toggleStar,
 } from "@/actions/ai";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn, formatRelativeTime, initials } from "@/lib/utils";
 
 import type { InboxMessage, ThreadDetail } from "@/components/app/inbox/types";
+
+const DRAFT_REPLY_TONES = [
+  "Professional but warm",
+  "Friendly and conversational",
+  "Detailed and reassuring",
+  "Short and direct",
+] as const;
 
 type ThreadReaderProps = {
   detail: ThreadDetail | null;
@@ -250,16 +264,21 @@ function ReaderContent({
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Reply
               </p>
-              <select
-                value={draftTone}
-                onChange={(e) => setDraftTone(e.target.value)}
-                className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground"
-              >
-                <option>Professional but warm</option>
-                <option>Friendly and conversational</option>
-                <option>Detailed and reassuring</option>
-                <option>Short and direct</option>
-              </select>
+              <Select value={draftTone} onValueChange={setDraftTone}>
+                <SelectTrigger
+                  aria-label="Reply tone"
+                  className="h-8 min-w-[11rem] max-w-[14rem] shrink-0 rounded-lg border-border/60 px-2.5 text-xs font-medium shadow-none ring-1 ring-border/25 data-[state=open]:ring-primary/25"
+                >
+                  <SelectValue placeholder="Tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DRAFT_REPLY_TONES.map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 variant="ghost"
                 size="sm"
